@@ -148,6 +148,9 @@
             const badgeImage = getBadgeImageForLevel(level);
             const badgeName = getBadgeNameForLevel(level);
             
+            // Remove any existing animation class first
+            badgeElement.classList.remove('badge-unlock');
+            
             badgeElement.innerHTML = '';
             
             const img = document.createElement('img');
@@ -160,7 +163,13 @@
             badgeElement.title = `${badgeName} Badge`;
             
             if (animate) {
+                // Force reflow to ensure the element is rendered
+                void badgeElement.offsetWidth;
+                
+                // Add animation class
                 badgeElement.classList.add('badge-unlock');
+                
+                // Remove animation class after animation completes
                 setTimeout(() => {
                     badgeElement.classList.remove('badge-unlock');
                 }, 2000);
@@ -174,6 +183,9 @@
             const badgeNameElement = document.getElementById("badgeName");
             
             if (showcaseElement) {
+                // Remove any existing animation class first
+                showcaseElement.classList.remove('badge-showcase-unlock');
+                
                 showcaseElement.innerHTML = '';
                 const img = document.createElement('img');
                 img.src = badgeImage;
@@ -182,12 +194,16 @@
                 showcaseElement.appendChild(img);
                 
                 if (animate) {
-                    showcaseElement.classList.remove('badge-showcase-unlock');
+                    // Force reflow to ensure the element is rendered
                     void showcaseElement.offsetWidth;
+                    
+                    // Add animation class
                     showcaseElement.classList.add('badge-showcase-unlock');
+                    
+                    // Remove animation class after animation completes
                     setTimeout(() => {
                         showcaseElement.classList.remove('badge-showcase-unlock');
-                    }, 2000);
+                    }, 2500);
                 }
             }
             
