@@ -855,7 +855,8 @@
                         dailyQuestsCompleted: updatedDailyCompleted,
                         questCompletionCount: currentQuestCompletionCount,
                         allQuestsCompleted: shouldMarkAllCompleted || allQuestsCompleted,
-                        allQuestsCompletedCount: newAllQuestsCompletedCount
+                        allQuestsCompletedCount: newAllQuestsCompletedCount,
+                        lastQuestCompletionTime: new Date().toISOString()
                     });
                     
                     if (updateResult.success) {
