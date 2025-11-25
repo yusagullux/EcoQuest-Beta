@@ -64,6 +64,17 @@
             </div>
         </div>
 
+        <div class="badge-showcase-card">
+            <div class="badge-showcase-container">
+                <div id="badgeShowcase" class="badge-showcase">
+                    <div class="badge-placeholder">Loading badge...</div>
+                </div>
+                <div class="badge-info">
+                    <h3 id="badgeName">-</h3>
+                </div>
+            </div>
+        </div>
+
         <div class="dashboard-cards">
             <div class="dashboard-card">
                 <div class="mission-header">
@@ -93,17 +104,6 @@
                 </div>
                 <div class="category-progress-list" id="categoryProgressList">
                     
-                </div>
-            </div>
-        </div>
-
-        <div class="badge-showcase-card">
-            <div class="badge-showcase-container">
-                <div id="badgeShowcase" class="badge-showcase">
-                    <div class="badge-placeholder">Loading badge...</div>
-                </div>
-                <div class="badge-info">
-                    <h3 id="badgeName">-</h3>
                 </div>
             </div>
         </div>
@@ -225,25 +225,39 @@
                     displayBadge(badgeElement, newLevel, true);
                 }
                 
+                // First show the badge without animation
                 displayBadgeShowcase(newLevel, false);
                 
-                const badgeShowcaseCard = document.querySelector('.badge-showcase-card');
-                if (badgeShowcaseCard) {
-                    badgeShowcaseCard.scrollIntoView({ 
-                        behavior: 'smooth', 
-                        block: 'center' 
-                    });
-                    
+                // Small delay to ensure badge is visible, then animate
+                requestAnimationFrame(() => {
                     requestAnimationFrame(() => {
-                        requestAnimationFrame(() => {
-                            setTimeout(() => {
-                                displayBadgeShowcase(newLevel, true);
-                            }, 600);
-                        });
+                        // Scroll to badge showcase if it's not fully visible
+                        const badgeShowcaseCard = document.querySelector('.badge-showcase-card');
+                        if (badgeShowcaseCard) {
+                            const rect = badgeShowcaseCard.getBoundingClientRect();
+                            const isVisible = rect.top >= 0 && rect.bottom <= window.innerHeight;
+                            
+                            if (!isVisible) {
+                                badgeShowcaseCard.scrollIntoView({ 
+                                    behavior: 'smooth', 
+                                    block: 'center' 
+                                });
+                                
+                                // Wait for scroll, then animate
+                                setTimeout(() => {
+                                    displayBadgeShowcase(newLevel, true);
+                                }, 500);
+                            } else {
+                                // Already visible, animate immediately
+                                setTimeout(() => {
+                                    displayBadgeShowcase(newLevel, true);
+                                }, 300);
+                            }
+                        } else {
+                            displayBadgeShowcase(newLevel, true);
+                        }
                     });
-                } else {
-                    displayBadgeShowcase(newLevel, true);
-                }
+                });
                 
                 await updateUserProfile(user.uid, {
                     activeBadge: newBadge,
@@ -840,23 +854,39 @@
                         const wasAlreadyCompleted = profile.allQuestsCompleted || false;
                         
                         if (levelUp) {
-                            const badgeShowcaseCard = document.querySelector('.badge-showcase-card');
-                            if (badgeShowcaseCard) {
-                                displayBadgeShowcase(newLevel, false);
-                                
-                                badgeShowcaseCard.scrollIntoView({ 
-                                    behavior: 'smooth', 
-                                    block: 'center' 
-                                });
-                                
+                            // First show the badge without animation
+                            displayBadgeShowcase(newLevel, false);
+                            
+                            // Small delay to ensure badge is visible, then animate
+                            requestAnimationFrame(() => {
                                 requestAnimationFrame(() => {
-                                    requestAnimationFrame(() => {
-                                        setTimeout(() => {
-                                            displayBadgeShowcase(newLevel, true);
-                                        }, 600);
-                                    });
+                                    // Scroll to badge showcase if it's not fully visible
+                                    const badgeShowcaseCard = document.querySelector('.badge-showcase-card');
+                                    if (badgeShowcaseCard) {
+                                        const rect = badgeShowcaseCard.getBoundingClientRect();
+                                        const isVisible = rect.top >= 0 && rect.bottom <= window.innerHeight;
+                                        
+                                        if (!isVisible) {
+                                            badgeShowcaseCard.scrollIntoView({ 
+                                                behavior: 'smooth', 
+                                                block: 'center' 
+                                            });
+                                            
+                                            // Wait for scroll, then animate
+                                            setTimeout(() => {
+                                                displayBadgeShowcase(newLevel, true);
+                                            }, 500);
+                                        } else {
+                                            // Already visible, animate immediately
+                                            setTimeout(() => {
+                                                displayBadgeShowcase(newLevel, true);
+                                            }, 300);
+                                        }
+                                    } else {
+                                        displayBadgeShowcase(newLevel, true);
+                                    }
                                 });
-                            }
+                            });
                         }
                         
                         if (allQuestsCheck.allCompleted && !wasAlreadyCompleted) {
