@@ -1,0 +1,517 @@
+{
+  "categories": [
+    {
+      "id": "recycling",
+      "name": "Recycling",
+      "description": "Help the environment by properly recycling plastic and waste materials",
+      "badgeName": "Recycling Champion",
+      "icon": "♻️",
+      "color": "#4CAF50",
+      "quests": [
+        {
+          "id": "recycling_1",
+          "shortName": "Pick Up 2 Trash Items",
+          "description": "Collect 2 pieces of trash and place them in the correct recycling bin. Help reduce plastic waste.",
+          "carbonFootprintReduction": 2.5,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "count",
+            "current": 0,
+            "max": 2,
+            "increment": 1,
+            "unit": "trash items"
+          },
+          "xp": 40,
+          "ecoCoins": 30
+        },
+        {
+          "id": "recycling_2",
+          "shortName": "Use Reusable Bottle",
+          "description": "Use your own reusable water bottle instead of single-use plastic bottles throughout the day.",
+          "carbonFootprintReduction": 0.5,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "day"
+          },
+          "xp": 35,
+          "ecoCoins": 25
+        },
+        {
+          "id": "recycling_3",
+          "shortName": "Pick Up 2 Outdoor Trash",
+          "description": "Collect 2 pieces of litter from outdoor areas and dispose of them properly to keep your neighborhood clean.",
+          "carbonFootprintReduction": 2.0,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "count",
+            "current": 0,
+            "max": 2,
+            "increment": 1,
+            "unit": "trash items"
+          },
+          "xp": 40,
+          "ecoCoins": 30
+        },
+        {
+          "id": "recycling_4",
+          "shortName": "No Disposable Bags",
+          "description": "Bring your own reusable bags when shopping or carrying items to avoid single-use plastic bags.",
+          "carbonFootprintReduction": 0.3,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "day"
+          },
+          "xp": 30,
+          "ecoCoins": 20
+        },
+        {
+          "id": "recycling_5",
+          "shortName": "Unpackaged Meal",
+          "description": "Choose fresh, unpackaged food for at least one meal to reduce plastic and packaging waste.",
+          "carbonFootprintReduction": 0.8,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "meal"
+          },
+          "xp": 35,
+          "ecoCoins": 25
+        },
+        {
+          "id": "recycling_6",
+          "shortName": "Use Reusable Coffee Cup",
+          "description": "Bring your own reusable coffee cup to cafes instead of using disposable cups to reduce single-use waste.",
+          "carbonFootprintReduction": 0.3,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "day"
+          },
+          "xp": 30,
+          "ecoCoins": 20
+        }
+      ]
+    },
+    {
+      "id": "energy_saving",
+      "name": "Energy Saving",
+      "description": "Save energy by reducing electricity usage and reduce your carbon footprint",
+      "badgeName": "Energy Saver",
+      "icon": "💡",
+      "color": "#FFC107",
+      "quests": [
+        {
+          "id": "energy_1",
+          "shortName": "Turn Off Lights in Empty Rooms",
+          "description": "Save energy by turning off lights whenever you leave a room.",
+          "carbonFootprintReduction": 1.2,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "day"
+          },
+          "xp": 35,
+          "ecoCoins": 25
+        },
+        {
+          "id": "energy_2",
+          "shortName": "Open Windows Instead of Fans",
+          "description": "Use natural ventilation instead of electric fans or air conditioning when possible to save electricity.",
+          "carbonFootprintReduction": 0.8,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "day"
+          },
+          "xp": 30,
+          "ecoCoins": 20
+        },
+        {
+          "id": "energy_3",
+          "shortName": "Charge Phone Only When Needed",
+          "description": "Unplug your phone charger when not in use and only charge when the battery is low.",
+          "carbonFootprintReduction": 0.2,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "day"
+          },
+          "xp": 25,
+          "ecoCoins": 15
+        },
+        {
+          "id": "energy_4",
+          "shortName": "Use Clothesline Instead of Dryer",
+          "description": "Save energy by air-drying your clothes on a clothesline or drying rack instead of using an electric dryer.",
+          "carbonFootprintReduction": 1.5,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "load"
+          },
+          "xp": 35,
+          "ecoCoins": 25
+        },
+        {
+          "id": "energy_5",
+          "shortName": "Turn Off Electronics at Night",
+          "description": "Save energy by completely turning off your computer, TV, and other electronics when not in use, especially overnight.",
+          "carbonFootprintReduction": 0.8,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "night"
+          },
+          "xp": 30,
+          "ecoCoins": 20
+        },
+        {
+          "id": "energy_6",
+          "shortName": "Switch to LED Light Bulbs",
+          "description": "Replace at least one incandescent light bulb with an energy-efficient LED bulb to reduce electricity consumption.",
+          "carbonFootprintReduction": 2.0,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "bulb"
+          },
+          "xp": 40,
+          "ecoCoins": 30
+        },
+        {
+          "id": "energy_7",
+          "shortName": "Use Cold Water for Laundry",
+          "description": "Wash your clothes with cold water instead of hot water to save energy and reduce your carbon footprint.",
+          "carbonFootprintReduction": 1.0,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "load"
+          },
+          "xp": 30,
+          "ecoCoins": 20
+        }
+      ]
+    },
+    {
+      "id": "transportation",
+      "name": "Transportation",
+      "description": "Reduce carbon emissions by walking or using a bicycle",
+      "badgeName": "Green Commuter",
+      "icon": "🚶",
+      "color": "#2196F3",
+      "quests": [
+        {
+          "id": "transportation_1",
+          "shortName": "Walk 12 Minutes",
+          "description": "Choose to walk instead of using a car or public transport for short distances to reduce carbon emissions.",
+          "carbonFootprintReduction": 1.5,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "duration",
+            "current": 0,
+            "max": 12,
+            "increment": 1,
+            "unit": "minutes"
+          },
+          "xp": 45,
+          "ecoCoins": 35
+        },
+        {
+          "id": "transportation_2",
+          "shortName": "Use Public Transportation",
+          "description": "Reduce carbon emissions by choosing public transportation, carpooling, or biking instead of driving alone.",
+          "carbonFootprintReduction": 3.0,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "trip"
+          },
+          "xp": 40,
+          "ecoCoins": 30
+        },
+        {
+          "id": "transportation_3",
+          "shortName": "Use Bike for Short Trips",
+          "description": "Choose to ride a bicycle instead of driving for trips under 3 kilometers to reduce carbon emissions.",
+          "carbonFootprintReduction": 2.5,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "trip"
+          },
+          "xp": 45,
+          "ecoCoins": 35
+        }
+      ]
+    },
+    {
+      "id": "water_saving",
+      "name": "Water Saving",
+      "description": "Conserve water resources and save energy by reducing water usage",
+      "badgeName": "Water Guardian",
+      "icon": "💧",
+      "color": "#00BCD4",
+      "quests": [
+        {
+          "id": "water_1",
+          "shortName": "Turn Off Water While Brushing",
+          "description": "Turn off the tap while brushing your teeth to save gallons of water daily.",
+          "carbonFootprintReduction": 0.1,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "day"
+          },
+          "xp": 25,
+          "ecoCoins": 15
+        },
+        {
+          "id": "water_2",
+          "shortName": "Reduce Shower Time by 2 Minutes",
+          "description": "Cut your shower time by at least 2 minutes to save water and energy.",
+          "carbonFootprintReduction": 0.5,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "duration",
+            "current": 0,
+            "max": 2,
+            "increment": 1,
+            "unit": "minutes"
+          },
+          "xp": 35,
+          "ecoCoins": 25
+        }
+      ]
+    },
+    {
+      "id": "cleanup_missions",
+      "name": "Clean-Up Missions",
+      "description": "Protect nature and reduce waste pollution by cleaning your environment",
+      "badgeName": "Clean Earth Hero",
+      "icon": "🧹",
+      "color": "#9C27B0",
+      "quests": [
+        {
+          "id": "cleanup_1",
+          "shortName": "Pick Up 2 Trash Items",
+          "description": "Collect 2 pieces of trash and place them in the correct recycling bin. Help reduce plastic waste.",
+          "carbonFootprintReduction": 2.5,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "count",
+            "current": 0,
+            "max": 2,
+            "increment": 1,
+            "unit": "trash items"
+          },
+          "xp": 40,
+          "ecoCoins": 30
+        },
+        {
+          "id": "cleanup_2",
+          "shortName": "Pick Up 2 Outdoor Trash",
+          "description": "Collect 2 pieces of litter from outdoor areas and dispose of them properly to keep your neighborhood clean.",
+          "carbonFootprintReduction": 2.0,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "count",
+            "current": 0,
+            "max": 2,
+            "increment": 1,
+            "unit": "trash items"
+          },
+          "xp": 40,
+          "ecoCoins": 30
+        },
+        {
+          "id": "cleanup_3",
+          "shortName": "Clean Up Your Workspace",
+          "description": "Organize and clean your workspace or room, properly disposing of any waste and recycling materials.",
+          "carbonFootprintReduction": 1.5,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "workspace"
+          },
+          "xp": 35,
+          "ecoCoins": 25
+        }
+      ]
+    },
+    {
+      "id": "gardening",
+      "name": "Gardening & Nature",
+      "description": "Connect with nature and help the environment through gardening and planting",
+      "badgeName": "Green Thumb",
+      "icon": "🌱",
+      "color": "#66BB6A",
+      "quests": [
+        {
+          "id": "gardening_1",
+          "shortName": "Water Your Plants",
+          "description": "Take care of your indoor or outdoor plants by watering them and checking their health.",
+          "carbonFootprintReduction": 0.5,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "day"
+          },
+          "xp": 30,
+          "ecoCoins": 20
+        },
+        {
+          "id": "gardening_2",
+          "shortName": "Use Natural Light During Day",
+          "description": "Open curtains and use natural sunlight instead of turning on lights during daytime hours.",
+          "carbonFootprintReduction": 1.0,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "day"
+          },
+          "xp": 30,
+          "ecoCoins": 20
+        }
+      ]
+    },
+    {
+      "id": "sustainable_living",
+      "name": "Sustainable Living",
+      "description": "Adopt sustainable practices in your daily life to reduce environmental impact",
+      "badgeName": "Eco Warrior",
+      "icon": "♻️",
+      "color": "#8BC34A",
+      "quests": [
+        {
+          "id": "sustainable_1",
+          "shortName": "Compost Food Scraps",
+          "description": "Start composting your food scraps instead of throwing them in the trash to reduce waste and create nutrient-rich soil.",
+          "carbonFootprintReduction": 2.0,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "day"
+          },
+          "xp": 35,
+          "ecoCoins": 25
+        },
+        {
+          "id": "sustainable_2",
+          "shortName": "Reuse Containers or Jars",
+          "description": "Reuse glass jars, plastic containers, or other packaging instead of throwing them away.",
+          "carbonFootprintReduction": 1.0,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "day"
+          },
+          "xp": 30,
+          "ecoCoins": 20
+        },
+        {
+          "id": "sustainable_3",
+          "shortName": "Eat a Vegetarian Meal",
+          "description": "Choose a vegetarian or plant-based meal to reduce carbon emissions from meat production.",
+          "carbonFootprintReduction": 2.0,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "meal"
+          },
+          "xp": 40,
+          "ecoCoins": 30
+        },
+        {
+          "id": "sustainable_4",
+          "shortName": "Unplug Unused Chargers",
+          "description": "Unplug phone chargers, laptop chargers, and other electronics when not in use to save energy.",
+          "carbonFootprintReduction": 0.5,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "day"
+          },
+          "xp": 25,
+          "ecoCoins": 15
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "version": "2.2.0",
+    "lastUpdated": "2024-12-19",
+    "totalCategories": 7,
+    "totalQuests": 25,
+    "progressTypes": {
+      "boolean": "One-time quest - becomes 1 when completed",
+      "count": "Numerical quest - requires a specific number of actions",
+      "duration": "Duration-based quest - requires a specific time or distance"
+    }
+  }
+}

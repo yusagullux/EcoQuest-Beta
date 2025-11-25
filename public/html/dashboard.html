@@ -1,0 +1,2028 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="EcoQuest Dashboard - Track your eco-friendly missions, XP, and progress" />
+    <meta name="keywords" content="ecoquest, dashboard, missions, eco-friendly, sustainability" />
+    <meta name="author" content="EcoQuest" />
+    <meta property="og:title" content="EcoQuest | Dashboard" />
+    <meta property="og:description" content="Track your eco-friendly progress and complete daily missions" />
+    <meta property="og:type" content="website" />
+    <link rel="icon" type="image/png" href="../images/logo.png" />
+    <title>EcoQuest | Dashboard</title>
+    <link rel="stylesheet" href="../css/dashboard.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <nav>
+            <img src="../images/logo.png" alt="EcoQuest logo" onclick="window.location.href='dashboard.html'" style="cursor: pointer;" />
+            <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle mobile menu" aria-expanded="false">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <ul id="mobileMenu">
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="shop.html">Shop</a></li>
+                <li><a href="collection.html">Collection</a></li>
+                <li><a href="profile.html">Profile</a></li>
+                <li><a href="leaderboard.html">Leaderboard</a></li>
+                <li><button id="logoutButtonMobile" class="logout-button-mobile">Sign Out</button></li>
+            </ul>
+            <button id="logoutButton" class="logout-button">Sign Out</button>
+        </nav>
+    </header>
+    
+    <main id="dashboard" role="main">
+        <div class="user-info" role="region" aria-label="User Information">
+            <h2>Welcome, <span id="userDisplayName">User</span>! <span id="userBadge" class="badge-display" aria-label="Current Badge"></span></h2>
+            <p>Email: <span id="userEmail" class="user-email" aria-label="User Email">Loading...</span></p>
+        </div>
+
+        <div class="user-stats" role="region" aria-label="User Statistics">
+            <div class="stat-card" role="article" aria-label="Experience Points">
+                <h3>XP</h3>
+                <p class="stat-value" id="userXP" aria-live="polite">0</p>
+                <div class="level-progress-container">
+                    <div class="level-progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Level Progress">
+                        <div class="level-progress-fill" id="levelProgressFill"></div>
+                    </div>
+                    <div class="level-progress-text">
+                        <span id="levelProgressCurrent">0</span> / <span id="levelProgressNext">100</span> XP
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card" role="article" aria-label="EcoPoints">
+                <h3>EcoPoints</h3>
+                <p class="stat-value" id="ecoPoints" aria-live="polite">0</p>
+                <p class="stat-subtitle">For Shop</p>
+            </div>
+        </div>
+
+        <div class="dashboard-cards">
+            <div class="dashboard-card">
+                <div class="mission-header">
+                    <h2>Today's Missions</h2>
+                    <div id="countdownTimer" class="countdown-timer">
+                        Loading...
+                    </div>
+                </div>
+                <div class="mission-list" id="missionList">
+                    <p>Loading missions...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="quest-progress-section">
+            <div class="dashboard-card">
+                <h2>Quest Progress Charts</h2>
+                <div class="charts-container">
+                    <div class="chart-wrapper">
+                        <h3>Category Completion</h3>
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                    <div class="chart-wrapper">
+                        <h3>Carbon Footprint Reduction</h3>
+                        <canvas id="carbonChart"></canvas>
+                    </div>
+                </div>
+                <div class="category-progress-list" id="categoryProgressList">
+                    
+                </div>
+            </div>
+        </div>
+
+        <div class="badge-showcase-card">
+            <div class="badge-showcase-container">
+                <div id="badgeShowcase" class="badge-showcase">
+                    <div class="badge-placeholder">Loading badge...</div>
+                </div>
+                <div class="badge-info">
+                    <h3 id="badgeName">-</h3>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <script type="module">
+        import { requireAuth } from "../js/auth-guard.js";
+        import { logOut, getUserProfile, updateUserProfile } from "../js/auth.js";
+        function getBadgeImageForLevel(level) {
+            const badgeImages = {
+                1: "../images/ecoquests-badges/cat-badge-removedbg.png",
+                2: "../images/ecoquests-badges/fox-badge-removedbg.png",
+                3: "../images/ecoquests-badges/rabbit-badge-removedbg.png",
+                4: "../images/ecoquests-badges/deer-badge-removedbg.png",
+                5: "../images/ecoquests-badges/wolf-badge-removedbg.png",
+                6: "../images/ecoquests-badges/bear-badge-removedbg.png",
+                7: "../images/ecoquests-badges/eagle-badge-removedbg.png",
+                8: "../images/ecoquests-badges/tiger-badge-removedbg.png",
+                9: "../images/ecoquests-badges/dragon-badge-removedbg.png"
+            };
+            return badgeImages[level] || badgeImages[1];
+        }
+
+        function getBadgeNameForLevel(level) {
+            const badgeNames = {
+                1: "Cat",      // 0 XP
+                2: "Fox",      // 100 XP
+                3: "Rabbit",   // 250 XP
+                4: "Deer",     // 500 XP
+                5: "Wolf",     // 1,000 XP
+                6: "Bear",     // 2,500 XP
+                7: "Eagle",    // 5,000 XP
+                8: "Tiger",    // 10,000 XP
+                9: "Dragon"    // 50,000 XP (maximum level)
+            };
+            return badgeNames[level] || badgeNames[1];
+        }
+
+        function displayBadge(badgeElement, level, animate = false) {
+            const badgeImage = getBadgeImageForLevel(level);
+            const badgeName = getBadgeNameForLevel(level);
+            
+            badgeElement.innerHTML = '';
+            
+            const img = document.createElement('img');
+            img.src = badgeImage;
+            img.alt = `${badgeName} Badge`;
+            img.title = `${badgeName} Badge`;
+            img.className = 'badge-image';
+            
+            badgeElement.appendChild(img);
+            badgeElement.title = `${badgeName} Badge`;
+            
+            if (animate) {
+                badgeElement.classList.add('badge-unlock');
+                setTimeout(() => {
+                    badgeElement.classList.remove('badge-unlock');
+                }, 2000);
+            }
+        }
+
+        function displayBadgeShowcase(level, animate = false) {
+            const badgeImage = getBadgeImageForLevel(level);
+            const badgeName = getBadgeNameForLevel(level);
+            const showcaseElement = document.getElementById("badgeShowcase");
+            const badgeNameElement = document.getElementById("badgeName");
+            
+            if (showcaseElement) {
+                showcaseElement.innerHTML = '';
+                const img = document.createElement('img');
+                img.src = badgeImage;
+                img.alt = `${badgeName} Badge`;
+                img.className = 'badge-showcase-image';
+                showcaseElement.appendChild(img);
+                
+                if (animate) {
+                    showcaseElement.classList.remove('badge-showcase-unlock');
+                    void showcaseElement.offsetWidth;
+                    showcaseElement.classList.add('badge-showcase-unlock');
+                    setTimeout(() => {
+                        showcaseElement.classList.remove('badge-showcase-unlock');
+                    }, 2000);
+                }
+            }
+            
+            if (badgeNameElement) {
+                badgeNameElement.textContent = badgeName;
+            }
+        }
+
+        async function checkAndUnlockBadge(user, oldLevel, newLevel) {
+            if (newLevel > oldLevel && newLevel <= 9) {
+                const profileResult = await getUserProfile(user.uid);
+                if (!profileResult.success) return;
+                
+                const profile = profileResult.data;
+                const newBadge = getBadgeNameForLevel(newLevel);
+                
+                const badgeElement = document.getElementById("userBadge");
+                if (badgeElement) {
+                    displayBadge(badgeElement, newLevel, true);
+                }
+                
+                displayBadgeShowcase(newLevel, false);
+                
+                const badgeShowcaseCard = document.querySelector('.badge-showcase-card');
+                if (badgeShowcaseCard) {
+                    badgeShowcaseCard.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'center' 
+                    });
+                    
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(() => {
+                            setTimeout(() => {
+                                displayBadgeShowcase(newLevel, true);
+                            }, 600);
+                        });
+                    });
+                } else {
+                    displayBadgeShowcase(newLevel, true);
+                }
+                
+                await updateUserProfile(user.uid, {
+                    activeBadge: newBadge,
+                    badges: [...new Set([...(profile.badges || []), newBadge])]
+                });
+            }
+        }
+
+        const LEVEL_MILESTONES = [
+            0,
+            100,
+            250,
+            500,
+            1000,
+            2500,
+            5000,
+            10000,
+            50000
+        ];
+
+        function getXPRequiredForLevel(level) {
+            if (level <= 1) return LEVEL_MILESTONES[1] - LEVEL_MILESTONES[0];
+            if (level > LEVEL_MILESTONES.length) return Infinity;
+            if (level === LEVEL_MILESTONES.length) return Infinity;
+            return LEVEL_MILESTONES[level] - LEVEL_MILESTONES[level - 1];
+        }
+
+        function getTotalXPForLevel(level) {
+            if (level <= 1) return 0;
+            if (level > LEVEL_MILESTONES.length) return LEVEL_MILESTONES[LEVEL_MILESTONES.length - 1];
+            return LEVEL_MILESTONES[level - 1];
+        }
+
+        function calculateLevel(xp) {
+            for (let i = LEVEL_MILESTONES.length - 1; i >= 0; i--) {
+                if (xp >= LEVEL_MILESTONES[i]) {
+                    return i + 1;
+                }
+            }
+            return 1;
+        }
+
+        function getXPForNextLevel(xp, currentLevel) {
+            const totalXPForCurrentLevel = getTotalXPForLevel(currentLevel);
+            const xpInCurrentLevel = xp - totalXPForCurrentLevel;
+            const requiredXP = getXPRequiredForLevel(currentLevel + 1);
+            return Math.max(0, requiredXP - xpInCurrentLevel);
+        }
+
+        function getXPProgress(xp, currentLevel) {
+            const totalXPForCurrentLevel = getTotalXPForLevel(currentLevel);
+            const xpInCurrentLevel = xp - totalXPForCurrentLevel;
+            const requiredXP = getXPRequiredForLevel(currentLevel + 1);
+            const progress = requiredXP > 0 ? (xpInCurrentLevel / requiredXP) * 100 : 100;
+            return {
+                current: xpInCurrentLevel,
+                required: requiredXP,
+                percentage: Math.min(100, Math.max(0, progress))
+            };
+        }
+
+        function calculateEcoPoints(xp, level, badgesCount = 0) {
+            let basePoints = 0;
+            
+            if (level <= 3) {
+                basePoints = Math.floor(xp / 10);
+            } else if (level <= 5) {
+                basePoints = Math.floor(xp / 15);
+            } else if (level <= 7) {
+                basePoints = Math.floor(xp / 25);
+            } else {
+                basePoints = Math.floor(xp / 50);
+            }
+            
+            const badgeBonus = badgesCount * 10;
+            
+            return basePoints + badgeBonus;
+        }
+
+        function getTodayDateString() {
+            const today = new Date();
+            return today.toISOString().split('T')[0];
+        }
+
+        function getCurrentTimestamp() {
+            return new Date().toISOString();
+        }
+
+        function getTimeUntilNextReset(lastResetTime) {
+            const now = new Date().getTime();
+            const lastReset = new Date(lastResetTime).getTime();
+            const twentyFourHours = 24 * 60 * 60 * 1000;
+            const nextReset = lastReset + twentyFourHours;
+            const timeRemaining = nextReset - now;
+            
+            return Math.max(0, timeRemaining);
+        }
+
+        function formatTimeRemaining(ms) {
+            if (ms <= 0) return "00:00:00";
+            
+            const totalSeconds = Math.floor(ms / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            
+            return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        function shouldResetQuests(lastResetTime) {
+            if (!lastResetTime) return true;
+            const timeRemaining = getTimeUntilNextReset(lastResetTime);
+            return timeRemaining <= 0;
+        }
+
+        let countdownInterval = null;
+
+        function startCountdown(lastResetTime, onReset) {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+            
+            if (!lastResetTime) {
+                const countdownElement = document.getElementById("countdownTimer");
+                if (countdownElement) {
+                    countdownElement.textContent = "Calculating...";
+                }
+                return;
+            }
+            
+            const updateCountdown = () => {
+                const timeRemaining = getTimeUntilNextReset(lastResetTime);
+                const countdownElement = document.getElementById("countdownTimer");
+                
+                if (!countdownElement) {
+                    if (countdownInterval) {
+                        clearInterval(countdownInterval);
+                        countdownInterval = null;
+                    }
+                    return;
+                }
+                
+                if (timeRemaining <= 0) {
+                    countdownElement.textContent = "Resetting...";
+                    if (countdownInterval) {
+                        clearInterval(countdownInterval);
+                        countdownInterval = null;
+                    }
+                    if (onReset) {
+                        onReset();
+                    }
+                    return;
+                }
+                
+                countdownElement.textContent = `Next reset: ${formatTimeRemaining(timeRemaining)}`;
+            };
+            
+            updateCountdown();
+            countdownInterval = setInterval(updateCountdown, 1000);
+        }
+
+        function stopCountdown() {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+        }
+
+        async function loadQuests() {
+            try {
+                const response = await fetch('../quests.md');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const text = await response.text();
+                const quests = parseQuests(text);
+                return quests;
+            } catch (error) {
+                console.error("Error loading quests:", error);
+                return [];
+            }
+        }
+
+        function parseQuests(markdown) {
+            const quests = [];
+            const lines = markdown.split('\n');
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (line.startsWith('### ')) {
+                    const titleMatch = line.match(/### (\d+)\. (.+)/);
+                    if (titleMatch) {
+                        let xp = 0;
+                        let rewardText = "";
+                        
+                        for (let j = i + 1; j < Math.min(i + 5, lines.length); j++) {
+                            const nextLine = lines[j].trim();
+                            
+                            const xpMatch = nextLine.match(/\*\*XP Score:\*\* (\d+)\s*XP/);
+                            if (xpMatch) {
+                                xp = parseInt(xpMatch[1]);
+                            }
+                            
+                            const rewardMatch = nextLine.match(/\*\*Reward:\*\* (.+)/);
+                            if (rewardMatch) {
+                                rewardText = rewardMatch[1].trim();
+                            }
+                        }
+                        
+                        if (xp > 0) {
+                            const questId = titleMatch[1];
+                            const questMapping = QUEST_ID_MAPPING[questId];
+                            quests.push({
+                                id: questId,
+                                title: titleMatch[2].trim(),
+                                reward: rewardText || `${xp} XP`,
+                                xp: xp,
+                                category: questMapping?.category || "unknown",
+                                categoryName: questMapping?.categoryName || "Unknown",
+                                categoryIcon: questMapping?.categoryIcon || "📋",
+                                categoryColor: questMapping?.categoryColor || "#999999"
+                            });
+                        }
+                    }
+                }
+            }
+
+            return quests;
+        }
+
+        function getQuestBonusMultiplier(completionCount) {
+            if (completionCount <= 0) return 1.0;
+            const bonus = 1 + (completionCount * 0.2);
+            return Math.min(bonus, 3.0);
+        }
+
+        function getRandomQuests(quests, completedQuestIds, allQuestsCompleted = false, count = 5) {
+            if (allQuestsCompleted) {
+                const shuffled = [...quests].sort(() => 0.5 - Math.random());
+                return shuffled.slice(0, Math.min(count, shuffled.length));
+            }
+            
+            const availableQuests = quests.filter(q => !completedQuestIds.includes(q.id));
+            if (availableQuests.length === 0) {
+                return quests.slice(0, Math.min(count, quests.length));
+            }
+            const shuffled = [...availableQuests].sort(() => 0.5 - Math.random());
+            return shuffled.slice(0, Math.min(count, shuffled.length));
+        }
+
+        async function resetDailyQuests(user, allQuests, completedQuests, allQuestsCompleted = false) {
+            try {
+                const newResetTime = getCurrentTimestamp();
+                const newQuests = getRandomQuests(allQuests, completedQuests, allQuestsCompleted, 5);
+                
+                await updateUserProfile(user.uid, {
+                    lastQuestResetTime: newResetTime,
+                    currentDailyQuests: newQuests.map(q => q.id),
+                    dailyQuestsCompleted: []
+                });
+                
+                return newQuests;
+            } catch (error) {
+                console.error("Error resetting daily quests:", error);
+                throw error;
+            }
+        }
+
+        async function loadUserDailyQuests(user, allQuests, completedQuests) {
+            try {
+                const profileResult = await getUserProfile(user.uid);
+                if (!profileResult.success) {
+                    throw new Error("Failed to load profile");
+                }
+                
+                const profile = profileResult.data;
+                const lastResetTime = profile.lastQuestResetTime;
+                const currentDailyQuestIds = profile.currentDailyQuests || [];
+                const dailyQuestsCompleted = profile.dailyQuestsCompleted || [];
+                const allQuestsCompleted = profile.allQuestsCompleted || false;
+                
+                if (shouldResetQuests(lastResetTime)) {
+                    const newQuests = await resetDailyQuests(user, allQuests, completedQuests, allQuestsCompleted);
+                    startCountdown(getCurrentTimestamp(), () => {
+                        location.reload();
+                    });
+                    return { quests: newQuests, resetTime: getCurrentTimestamp() };
+                } else {
+                    const currentQuests = allQuests.filter(q => currentDailyQuestIds.includes(q.id));
+                    if (currentQuests.length === 0) {
+                        const newQuests = await resetDailyQuests(user, allQuests, completedQuests, allQuestsCompleted);
+                        startCountdown(getCurrentTimestamp(), () => {
+                            location.reload();
+                        });
+                        return { quests: newQuests, resetTime: getCurrentTimestamp() };
+                    }
+                    startCountdown(lastResetTime, () => {
+                        location.reload();
+                    });
+                    return { quests: currentQuests, resetTime: lastResetTime, dailyCompleted: dailyQuestsCompleted };
+                }
+            } catch (error) {
+                console.error("Error loading daily quests:", error);
+                throw error;
+            }
+        }
+
+        async function renderQuests(quests, currentUser, completedQuestIds, dailyCompletedQuests = []) {
+            const missionList = document.getElementById("missionList");
+            missionList.innerHTML = "";
+
+            if (quests.length === 0) {
+                missionList.innerHTML = "<p style='color: #999; text-align: center; padding: 20px;'>No missions available today. Check back tomorrow!</p>";
+                return;
+            }
+
+            const profileResult = await getUserProfile(currentUser.uid);
+            const profile = profileResult.success ? profileResult.data : {};
+            const questCompletionCount = profile.questCompletionCount || {}; // { questId: count }
+            const allQuestsCompleted = profile.allQuestsCompleted || false;
+
+            const questsData = await loadQuestsData();
+            const categoryStats = questsData ? calculateQuestProgress(questsData, completedQuestIds || []) : null;
+
+            quests.forEach((quest, index) => {
+                const isCompletedToday = dailyCompletedQuests.includes(quest.id);
+                const wasEverCompleted = completedQuestIds.includes(quest.id);
+                const isCompleted = allQuestsCompleted ? isCompletedToday : (isCompletedToday || wasEverCompleted);
+                
+                const completionCount = questCompletionCount[quest.id] || 0;
+                const bonusMultiplier = getQuestBonusMultiplier(completionCount);
+                const bonusXP = Math.floor(quest.xp * bonusMultiplier);
+                const missionItem = document.createElement("div");
+                missionItem.className = `mission-item ${isCompleted ? 'completed' : ''}`;
+                missionItem.dataset.questIndex = index;
+                missionItem.dataset.questId = quest.id;
+                missionItem.dataset.category = quest.category;
+                
+                const checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.id = `mission-${index + 1}`;
+                checkbox.disabled = isCompleted;
+                checkbox.checked = isCompleted;
+                
+                const questContent = document.createElement("div");
+                questContent.className = "quest-content";
+                
+                const categoryInfo = categoryStats?.find(cat => cat.id === quest.category);
+                const categoryBadge = document.createElement("div");
+                categoryBadge.className = "quest-category-badge";
+                categoryBadge.style.borderLeft = `4px solid ${quest.categoryColor || "#999"}`;
+                
+                const categoryHeader = document.createElement("div");
+                categoryHeader.className = "category-header";
+                categoryHeader.innerHTML = `
+                    <span class="category-icon-badge" style="background: ${quest.categoryColor || "#999"}20; color: ${quest.categoryColor || "#999"}">
+                        ${quest.categoryIcon || "📋"} ${quest.categoryName || "Unknown"}
+                    </span>
+                    ${categoryInfo ? `
+                        <span class="category-progress-badge">
+                            ${categoryInfo.completedQuests}/${categoryInfo.totalQuests} quests
+                        </span>
+                    ` : ''}
+                `;
+                
+                let categoryProgressHTML = '';
+                if (categoryInfo) {
+                    const progressPercent = categoryInfo.completionPercentage;
+                    categoryProgressHTML = `
+                        <div class="category-mini-progress">
+                            <div class="category-mini-progress-bar" style="background: ${quest.categoryColor || "#999"}20;">
+                                <div class="category-mini-progress-fill" style="width: ${progressPercent}%; background: ${quest.categoryColor || "#999"};"></div>
+                            </div>
+                            <span class="category-mini-progress-text">${progressPercent.toFixed(0)}% complete</span>
+                        </div>
+                    `;
+                }
+                
+                categoryBadge.innerHTML = categoryHeader.outerHTML + categoryProgressHTML;
+                
+                const questDetails = document.createElement("div");
+                questDetails.className = "quest-details";
+                
+                const label = document.createElement("label");
+                label.htmlFor = `mission-${index + 1}`;
+                label.className = "quest-title";
+                label.textContent = quest.title;
+                if (isCompleted) {
+                    label.style.textDecoration = "line-through";
+                    label.style.opacity = "0.6";
+                }
+                
+                const questStats = document.createElement("div");
+                questStats.className = "quest-stats";
+                
+                let carbonReduction = 0;
+                if (questsData) {
+                    const category = questsData.categories.find(cat => cat.id === quest.category);
+                    if (category) {
+                        const questInJson = category.quests.find(q => {
+                            const mapping = QUEST_ID_MAPPING[quest.id];
+                            return mapping && mapping.jsonIds.includes(q.id);
+                        });
+                        if (questInJson) {
+                            carbonReduction = questInJson.carbonFootprintReduction;
+                        }
+                    }
+                }
+                
+                const badgeInfo = categoryInfo && categoryInfo.completedQuests === categoryInfo.totalQuests && categoryInfo.totalQuests > 0
+                    ? `<span class="badge-unlocked-indicator">🏆 ${categoryInfo.badgeName} Unlocked!</span>`
+                    : categoryInfo && categoryInfo.totalQuests > 0
+                    ? `<span class="badge-next-indicator">Next: ${categoryInfo.badgeName} (${categoryInfo.totalQuests - categoryInfo.completedQuests} quests left)</span>`
+                    : '';
+                
+                let bonusInfo = '';
+                if (completionCount > 0 && allQuestsCompleted) {
+                    const bonusPercent = Math.round((bonusMultiplier - 1) * 100);
+                    bonusInfo = `<div class="quest-bonus-info" style="
+                        background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+                        color: #333;
+                        padding: 4px 8px;
+                        border-radius: 6px;
+                        font-size: 11px;
+                        font-weight: 600;
+                        margin-top: 4px;
+                        display: inline-block;
+                    ">🔄 Repeat ${completionCount + 1}: +${bonusPercent}% Bonus XP!</div>`;
+                }
+                
+                questStats.innerHTML = `
+                    <div class="quest-rewards">
+                        <span class="reward-xp">+${bonusXP} XP${completionCount > 0 && allQuestsCompleted ? ` <span style="color: #ffd700; font-weight: 600;">(+${bonusXP - quest.xp})</span>` : ''}</span>
+                        ${carbonReduction > 0 ? `<span class="reward-carbon">-${carbonReduction.toFixed(1)} kg CO₂</span>` : ''}
+                    </div>
+                    ${bonusInfo}
+                    ${badgeInfo ? `<div class="quest-badge-info">${badgeInfo}</div>` : ''}
+                `;
+                
+                questDetails.appendChild(label);
+                questDetails.appendChild(questStats);
+                
+                questContent.appendChild(categoryBadge);
+                questContent.appendChild(questDetails);
+                
+                missionItem.appendChild(checkbox);
+                missionItem.appendChild(questContent);
+                missionList.appendChild(missionItem);
+            });
+
+            const completeButton = document.createElement("button");
+            completeButton.className = "complete-button";
+            completeButton.id = "completeMissionsButton";
+            completeButton.textContent = "Complete Selected Missions";
+            completeButton.disabled = false;
+            
+            completeButton.addEventListener("click", async () => {
+                const checkboxes = document.querySelectorAll('.mission-item input[type="checkbox"]:checked:not(:disabled)');
+                if (checkboxes.length === 0) {
+                    alert("Please select at least one mission to complete!");
+                    return;
+                }
+                
+                completeButton.disabled = true;
+                completeButton.textContent = "Processing...";
+                
+                try {
+                    const profileResult = await getUserProfile(currentUser.uid);
+                    if (!profileResult.success) {
+                        throw new Error("Error loading profile: " + profileResult.error);
+                    }
+                    
+                    const profile = profileResult.data;
+                    const currentQuestCompletionCount = profile.questCompletionCount || {};
+                    const allQuestsCompleted = profile.allQuestsCompleted || false;
+                    
+                    let totalXP = 0;
+                    const completedQuestIdsToAdd = [];
+                    
+                    checkboxes.forEach(checkbox => {
+                        const missionItem = checkbox.closest('.mission-item');
+                        if (!missionItem) return;
+                        
+                        const questIndex = parseInt(missionItem.dataset.questIndex);
+                        const questId = missionItem.dataset.questId;
+                        
+                        if (isNaN(questIndex) || questIndex < 0 || questIndex >= quests.length) {
+                            console.warn(`Invalid quest index: ${questIndex}`);
+                            return;
+                        }
+                        if (!questId) {
+                            console.warn('Missing quest ID');
+                            return;
+                        }
+                        
+                        const baseXP = quests[questIndex].xp || 0;
+                        const completionCount = currentQuestCompletionCount[questId] || 0;
+                        const bonusMultiplier = getQuestBonusMultiplier(completionCount);
+                        const bonusXP = Math.floor(baseXP * bonusMultiplier);
+                        
+                        totalXP += bonusXP;
+                        completedQuestIdsToAdd.push(questId);
+                        
+                        currentQuestCompletionCount[questId] = (currentQuestCompletionCount[questId] || 0) + 1;
+                        
+                        missionItem.classList.add('completed');
+                        checkbox.disabled = true;
+                    });
+                    
+                    if (completedQuestIdsToAdd.length === 0) {
+                        completeButton.disabled = false;
+                        completeButton.textContent = "Complete Selected Missions";
+                        alert("No valid missions selected. Please try again.");
+                        return;
+                    }
+                    
+                    const currentXP = profile.xp || 0;
+                    const currentEcoPoints = profile.ecoPoints || 0;
+                    const currentMissions = profile.missionsCompleted || 0;
+                    const currentLevel = profile.level || calculateLevel(currentXP);
+                    const currentCompletedQuests = profile.completedQuests || [];
+                    const dailyQuestsCompleted = profile.dailyQuestsCompleted || [];
+                    const badgesCount = (profile.badges || []).length;
+                    
+                    const newXP = currentXP + totalXP;
+                    const newLevel = calculateLevel(newXP);
+                    
+                    const expectedEcoPointsAtNewLevel = calculateEcoPoints(newXP, newLevel, badgesCount);
+                    const expectedEcoPointsAtCurrentLevel = calculateEcoPoints(currentXP, currentLevel, badgesCount);
+                    
+                    let earnedEcoPoints = expectedEcoPointsAtNewLevel - expectedEcoPointsAtCurrentLevel;
+                    
+                    let bonusEcoPoints = 0;
+                    if (allQuestsCompleted) {
+                        checkboxes.forEach(checkbox => {
+                            const missionItem = checkbox.closest('.mission-item');
+                            const questId = missionItem?.dataset.questId;
+                            if (questId) {
+                                const completionCount = currentQuestCompletionCount[questId] || 0;
+                                if (completionCount > 0) {
+                                    const questBonus = Math.min(completionCount * 0.1, 0.5);
+                                    const questBaseEcoPoints = (quests.find(q => q.id === questId)?.xp || 0) * 0.1;
+                                    bonusEcoPoints += Math.floor(questBaseEcoPoints * questBonus);
+                                }
+                            }
+                        });
+                    }
+                    
+                    const newEcoPoints = currentEcoPoints + earnedEcoPoints + bonusEcoPoints;
+                    
+                    const newMissions = currentMissions + checkboxes.length;
+                    const updatedCompletedQuests = [...new Set([...currentCompletedQuests, ...completedQuestIdsToAdd])];
+                    const updatedDailyCompleted = [...new Set([...dailyQuestsCompleted, ...completedQuestIdsToAdd])];
+                    
+                    const allQuestsCheck = await checkAllQuestsCompleted(updatedCompletedQuests);
+                    const shouldMarkAllCompleted = allQuestsCheck.allCompleted && !allQuestsCompleted;
+                    
+                    const currentAllQuestsCompletedCount = profile.allQuestsCompletedCount || 0;
+                    let newAllQuestsCompletedCount = currentAllQuestsCompletedCount;
+                    
+                    const allDailyQuestsCompleted = updatedDailyCompleted.length >= quests.length && quests.length > 0;
+                    const previousAllDailyQuestsCompleted = dailyQuestsCompleted.length >= quests.length && quests.length > 0;
+                    
+                    if (allQuestsCompleted && allDailyQuestsCompleted && !previousAllDailyQuestsCompleted) {
+                        newAllQuestsCompletedCount = currentAllQuestsCompletedCount + 1;
+                    }
+                    
+                    if (shouldMarkAllCompleted) {
+                        newAllQuestsCompletedCount = 1;
+                    }
+                    
+                    const updateResult = await updateUserProfile(currentUser.uid, {
+                        xp: newXP,
+                        ecoPoints: newEcoPoints,
+                        missionsCompleted: newMissions,
+                        level: newLevel,
+                        completedQuests: updatedCompletedQuests,
+                        dailyQuestsCompleted: updatedDailyCompleted,
+                        questCompletionCount: currentQuestCompletionCount,
+                        allQuestsCompleted: shouldMarkAllCompleted || allQuestsCompleted,
+                        allQuestsCompletedCount: newAllQuestsCompletedCount
+                    });
+                    
+                    if (updateResult.success) {
+                        const progress = getXPProgress(newXP, newLevel);
+                        const ecoPointsEarned = newEcoPoints - currentEcoPoints;
+                        const levelUp = newLevel > currentLevel;
+                        
+                        updateUI(newXP, newLevel, newMissions, newEcoPoints, currentUser, currentLevel);
+                        
+                        await updateQuestCharts(updatedCompletedQuests);
+                        
+                        const wasAlreadyCompleted = profile.allQuestsCompleted || false;
+                        
+                        if (levelUp) {
+                            const badgeShowcaseCard = document.querySelector('.badge-showcase-card');
+                            if (badgeShowcaseCard) {
+                                displayBadgeShowcase(newLevel, false);
+                                
+                                badgeShowcaseCard.scrollIntoView({ 
+                                    behavior: 'smooth', 
+                                    block: 'center' 
+                                });
+                                
+                                requestAnimationFrame(() => {
+                                    requestAnimationFrame(() => {
+                                        setTimeout(() => {
+                                            displayBadgeShowcase(newLevel, true);
+                                        }, 600);
+                                    });
+                                });
+                            }
+                        }
+                        
+                        if (allQuestsCheck.allCompleted && !wasAlreadyCompleted) {
+                            setTimeout(async () => {
+                                await showAllQuestsCompletedCelebration(currentUser, 500, 250, {
+                                    currentXP: newXP,
+                                    currentEcoPoints: newEcoPoints,
+                                    currentLevel: newLevel,
+                                    currentBadges: [...new Set([...(profile.badges || []), getBadgeNameForLevel(newLevel)])],
+                                    allQuestsCompletedCount: newAllQuestsCompletedCount
+                                });
+                            }, 1500);
+                        }
+                        
+                        let bonusInfo = '';
+                        if (allQuestsCompleted) {
+                            const totalBaseXP = checkboxes.reduce((sum, checkbox) => {
+                                const missionItem = checkbox.closest('.mission-item');
+                                const questId = missionItem?.dataset.questId;
+                                if (questId) {
+                                    const quest = quests.find(q => q.id === questId);
+                                    return sum + (quest?.xp || 0);
+                                }
+                                return sum;
+                            }, 0);
+                            const bonusXPAmount = totalXP - totalBaseXP;
+                            if (bonusXPAmount > 0) {
+                                bonusInfo = `\n🔄 Repeat Bonus: +${bonusXPAmount} XP`;
+                            }
+                            if (bonusEcoPoints > 0) {
+                                bonusInfo += `\n💰 Repeat Bonus: +${bonusEcoPoints} EcoPoints`;
+                            }
+                        }
+                        
+                        let alertMessage = `Great job! You completed ${checkboxes.length} mission(s)!\n\n`;
+                        alertMessage += `✨ Earned: ${totalXP} XP${bonusInfo}\n`;
+                        alertMessage += `💰 Earned: ${ecoPointsEarned} EcoPoints\n\n`;
+                        alertMessage += `Level ${newLevel} - ${progress.current} / ${progress.required} XP to next level`;
+                        if (levelUp) {
+                            alertMessage += `\n\n🎉 New Badge Unlocked: ${getBadgeNameForLevel(newLevel)} Badge!`;
+                        }
+                        
+                        if (!allQuestsCheck.allCompleted && allQuestsCheck.totalQuests > 0) {
+                            alertMessage += `\n\n📊 Quest Progress: ${allQuestsCheck.completedCount} / ${allQuestsCheck.totalQuests} quests completed`;
+                        } else if (allQuestsCompleted) {
+                            alertMessage += `\n\n🔄 Replay Mode: Repeat quests to earn even more rewards!`;
+                        }
+                        
+                        alert(alertMessage);
+                        
+                        await renderQuests(
+                            quests, 
+                            currentUser, 
+                            updatedCompletedQuests, 
+                            updatedDailyCompleted
+                        );
+                    } else {
+                        throw new Error("Error updating profile: " + updateResult.error);
+                    }
+                } catch (error) {
+                    console.error("Error completing missions:", error);
+                    alert("Error: " + error.message);
+                    checkboxes.forEach(checkbox => {
+                        checkbox.checked = false;
+                        const missionItem = checkbox.closest('.mission-item');
+                        missionItem.classList.remove('completed');
+                    });
+                } finally {
+                    completeButton.disabled = false;
+                    completeButton.textContent = "Complete Selected Missions";
+                }
+            });
+            
+            missionList.appendChild(completeButton);
+        }
+
+        let categoryChartInstance = null;
+        let carbonChartInstance = null;
+
+        const QUEST_ID_MAPPING = {
+            "1": { 
+                jsonIds: ["recycling_1", "cleanup_1"], 
+                category: "recycling",
+                categoryName: "Recycling",
+                categoryIcon: "♻️",
+                categoryColor: "#4CAF50"
+            },
+            "2": { 
+                jsonIds: ["energy_1"], 
+                category: "energy_saving",
+                categoryName: "Energy Saving",
+                categoryIcon: "💡",
+                categoryColor: "#FFC107"
+            },
+            "3": { 
+                jsonIds: ["recycling_2"], 
+                category: "recycling",
+                categoryName: "Recycling",
+                categoryIcon: "♻️",
+                categoryColor: "#4CAF50"
+            },
+            "4": { 
+                jsonIds: ["transportation_1"], 
+                category: "transportation",
+                categoryName: "Transportation",
+                categoryIcon: "🚶",
+                categoryColor: "#2196F3"
+            },
+            "5": { 
+                jsonIds: ["water_1"], 
+                category: "water_saving",
+                categoryName: "Water Saving",
+                categoryIcon: "💧",
+                categoryColor: "#00BCD4"
+            },
+            "6": { 
+                jsonIds: ["recycling_3", "cleanup_2"], 
+                category: "cleanup_missions",
+                categoryName: "Clean-Up",
+                categoryIcon: "🧹",
+                categoryColor: "#9C27B0"
+            },
+            "7": { 
+                jsonIds: ["recycling_4"], 
+                category: "recycling",
+                categoryName: "Recycling",
+                categoryIcon: "♻️",
+                categoryColor: "#4CAF50"
+            },
+            "8": { 
+                jsonIds: ["water_2"], 
+                category: "water_saving",
+                categoryName: "Water Saving",
+                categoryIcon: "💧",
+                categoryColor: "#00BCD4"
+            },
+            "9": { 
+                jsonIds: ["recycling_5"], 
+                category: "recycling",
+                categoryName: "Recycling",
+                categoryIcon: "♻️",
+                categoryColor: "#4CAF50"
+            },
+            "10": { 
+                jsonIds: ["energy_2"], 
+                category: "energy_saving",
+                categoryName: "Energy Saving",
+                categoryIcon: "💡",
+                categoryColor: "#FFC107"
+            },
+            "11": { 
+                jsonIds: ["energy_3"], 
+                category: "energy_saving",
+                categoryName: "Energy Saving",
+                categoryIcon: "💡",
+                categoryColor: "#FFC107"
+            },
+            "12": { 
+                jsonIds: ["gardening_1"], 
+                category: "gardening",
+                categoryName: "Gardening & Nature",
+                categoryIcon: "🌱",
+                categoryColor: "#66BB6A"
+            },
+            "13": { 
+                jsonIds: ["transportation_2"], 
+                category: "transportation",
+                categoryName: "Transportation",
+                categoryIcon: "🚶",
+                categoryColor: "#2196F3"
+            },
+            "14": { 
+                jsonIds: ["sustainable_1"], 
+                category: "sustainable_living",
+                categoryName: "Sustainable Living",
+                categoryIcon: "♻️",
+                categoryColor: "#8BC34A"
+            },
+            "15": { 
+                jsonIds: ["sustainable_2"], 
+                category: "sustainable_living",
+                categoryName: "Sustainable Living",
+                categoryIcon: "♻️",
+                categoryColor: "#8BC34A"
+            },
+            "16": { 
+                jsonIds: ["energy_4"], 
+                category: "energy_saving",
+                categoryName: "Energy Saving",
+                categoryIcon: "💡",
+                categoryColor: "#FFC107"
+            },
+            "17": { 
+                jsonIds: ["sustainable_3"], 
+                category: "sustainable_living",
+                categoryName: "Sustainable Living",
+                categoryIcon: "♻️",
+                categoryColor: "#8BC34A"
+            },
+            "18": { 
+                jsonIds: ["energy_5"], 
+                category: "energy_saving",
+                categoryName: "Energy Saving",
+                categoryIcon: "💡",
+                categoryColor: "#FFC107"
+            },
+            "19": { 
+                jsonIds: ["recycling_6"], 
+                category: "recycling",
+                categoryName: "Recycling",
+                categoryIcon: "♻️",
+                categoryColor: "#4CAF50"
+            },
+            "20": { 
+                jsonIds: ["cleanup_3"], 
+                category: "cleanup_missions",
+                categoryName: "Clean-Up",
+                categoryIcon: "🧹",
+                categoryColor: "#9C27B0"
+            },
+            "21": { 
+                jsonIds: ["energy_6"], 
+                category: "energy_saving",
+                categoryName: "Energy Saving",
+                categoryIcon: "💡",
+                categoryColor: "#FFC107"
+            },
+            "22": { 
+                jsonIds: ["transportation_3"], 
+                category: "transportation",
+                categoryName: "Transportation",
+                categoryIcon: "🚶",
+                categoryColor: "#2196F3"
+            },
+            "23": { 
+                jsonIds: ["sustainable_4"], 
+                category: "sustainable_living",
+                categoryName: "Sustainable Living",
+                categoryIcon: "♻️",
+                categoryColor: "#8BC34A"
+            },
+            "24": { 
+                jsonIds: ["energy_7"], 
+                category: "energy_saving",
+                categoryName: "Energy Saving",
+                categoryIcon: "💡",
+                categoryColor: "#FFC107"
+            },
+            "25": { 
+                jsonIds: ["gardening_2"], 
+                category: "gardening",
+                categoryName: "Gardening & Nature",
+                categoryIcon: "🌱",
+                categoryColor: "#66BB6A"
+            }
+        };
+
+        async function loadQuestsData() {
+            try {
+                const response = await fetch('../quests.json');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error("Error loading quests.json:", error);
+                return null;
+            }
+        }
+
+        function mapCompletedQuestIds(completedQuestIds) {
+            const mappedIds = new Set();
+            completedQuestIds.forEach(id => {
+                const mapped = QUEST_ID_MAPPING[id];
+                if (mapped && mapped.jsonIds) {
+                    mapped.jsonIds.forEach(mappedId => mappedIds.add(mappedId));
+                }
+            });
+            return Array.from(mappedIds);
+        }
+
+        async function checkAllQuestsCompleted(completedQuestIds) {
+            try {
+                const questsData = await loadQuestsData();
+                if (!questsData || !questsData.metadata) {
+                    return { allCompleted: false, totalQuests: 0, completedCount: 0 };
+                }
+
+                const totalQuests = questsData.metadata.totalQuests || 0;
+                const completedCount = completedQuestIds ? completedQuestIds.length : 0;
+                const allCompleted = completedCount >= totalQuests && totalQuests > 0;
+
+                return { allCompleted, totalQuests, completedCount };
+            } catch (error) {
+                console.error("Error checking all quests completion:", error);
+                return { allCompleted: false, totalQuests: 0, completedCount: 0 };
+            }
+        }
+
+        async function showAllQuestsCompletedInfoCard(user = null) {
+            if (document.getElementById('allQuestsCompletedCard')) {
+                return;
+            }
+
+            const targetUser = user || currentUser;
+            if (!targetUser) {
+                console.error("No user provided to showAllQuestsCompletedInfoCard");
+                return;
+            }
+
+            let completionCount = 0;
+            try {
+                const profileResult = await getUserProfile(targetUser.uid);
+                if (profileResult.success) {
+                    completionCount = profileResult.data.allQuestsCompletedCount || 0;
+                }
+            } catch (error) {
+                console.error("Error loading completion count:", error);
+            }
+
+            const infoCard = document.createElement('div');
+            infoCard.id = 'allQuestsCompletedCard';
+            infoCard.style.cssText = `
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 20px;
+                border-radius: 15px;
+                margin: 20px 0;
+                text-align: center;
+                box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            `;
+
+            infoCard.innerHTML = `
+                <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 15px;">
+                    <div style="font-size: 48px;">🔄</div>
+                    <div style="text-align: left;">
+                        <h3 style="margin: 0; font-size: 22px; font-weight: 600;">Replay Mode Active!</h3>
+                        <p style="margin: 5px 0 0 0; opacity: 0.95; font-size: 16px; font-weight: 600;">
+                            ${completionCount} ${completionCount === 1 ? 'time' : 'times'} completed
+                        </p>
+                    </div>
+                </div>
+                <p style="margin: 10px 0; opacity: 0.95; font-size: 14px;">
+                    Amazing work! You've completed all eco-friendly quests and earned the <strong>Master Eco Warrior</strong> badge! 🌍✨
+                </p>
+                <p style="margin: 15px 0 0 0; opacity: 0.9; font-size: 13px; font-style: italic;">
+                    Keep playing to earn bonus rewards by repeating quests!
+                </p>
+            `;
+
+            const userStats = document.querySelector('.user-stats');
+            if (userStats && userStats.parentNode) {
+                userStats.parentNode.insertBefore(infoCard, userStats.nextSibling);
+            } else {
+                const dashboard = document.getElementById('dashboard');
+                if (dashboard) {
+                    dashboard.insertBefore(infoCard, dashboard.firstChild);
+                }
+            }
+        }
+
+        async function showAllQuestsCompletedCelebration(user, bonusXP = 500, bonusEcoPoints = 250, profileData = null) {
+            const modal = document.createElement('div');
+            modal.className = 'celebration-modal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 10000;
+                animation: fadeIn 0.3s ease-in;
+            `;
+
+            modal.innerHTML = `
+                <div style="
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    padding: 40px;
+                    border-radius: 20px;
+                    text-align: center;
+                    color: white;
+                    max-width: 500px;
+                    width: 90%;
+                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+                    animation: scaleIn 0.5s ease-out;
+                ">
+                    <div style="font-size: 80px; margin-bottom: 20px; animation: bounce 1s infinite;">🎉</div>
+                    <h2 style="font-size: 32px; margin-bottom: 15px; font-weight: 700;">ALL QUESTS COMPLETED!</h2>
+                    <p style="font-size: 18px; margin-bottom: 25px; opacity: 0.95;">
+                        Amazing work! You've completed all eco-friendly quests and become a true <strong>Eco Warrior</strong>! 🌍✨
+                    </p>
+                    <div style="
+                        background: rgba(255, 255, 255, 0.2);
+                        padding: 20px;
+                        border-radius: 10px;
+                        margin-bottom: 25px;
+                    ">
+                        <p style="font-size: 16px; margin: 10px 0;">
+                            <strong>🏆 Special Badge:</strong> Master Eco Warrior
+                        </p>
+                        <p style="font-size: 16px; margin: 10px 0;">
+                            <strong>✨ Bonus XP:</strong> +${bonusXP} XP
+                        </p>
+                        <p style="font-size: 16px; margin: 10px 0;">
+                            <strong>💰 Bonus EcoPoints:</strong> +${bonusEcoPoints} EcoPoints
+                        </p>
+                    </div>
+                    <button id="closeCelebration" style="
+                        background: white;
+                        color: #667eea;
+                        border: none;
+                        padding: 15px 40px;
+                        border-radius: 25px;
+                        font-size: 16px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: transform 0.2s;
+                    " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                        Awesome! 🎊
+                    </button>
+                </div>
+            `;
+
+            if (!document.getElementById('celebration-styles')) {
+                const style = document.createElement('style');
+                style.id = 'celebration-styles';
+                style.textContent = `
+                    @keyframes fadeIn {
+                        from { opacity: 0; }
+                        to { opacity: 1; }
+                    }
+                    @keyframes scaleIn {
+                        from { transform: scale(0.8); opacity: 0; }
+                        to { transform: scale(1); opacity: 1; }
+                    }
+                    @keyframes bounce {
+                        0%, 100% { transform: translateY(0); }
+                        50% { transform: translateY(-20px); }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+
+            document.body.appendChild(modal);
+
+            const closeBtn = document.getElementById('closeCelebration');
+            closeBtn.addEventListener('click', () => {
+                modal.style.animation = 'fadeOut 0.3s ease-out';
+                setTimeout(() => {
+                    document.body.removeChild(modal);
+                }, 300);
+            });
+
+            try {
+                let profile;
+                if (profileData) {
+                    profile = {
+                        xp: profileData.currentXP || 0,
+                        ecoPoints: profileData.currentEcoPoints || 0,
+                        badges: profileData.currentBadges || [],
+                        level: profileData.currentLevel || 1,
+                        missionsCompleted: 0, // Will be updated from actual profile if needed
+                        allQuestsCompletedCount: profileData.allQuestsCompletedCount || 0
+                    };
+                } else {
+                    const profileResult = await getUserProfile(user.uid);
+                    if (!profileResult.success) {
+                        throw new Error("Failed to load profile");
+                    }
+                    profile = profileResult.data;
+                }
+                
+                const currentXP = profile.xp || 0;
+                const currentEcoPoints = profile.ecoPoints || 0;
+                const currentBadges = profile.badges || [];
+                const currentLevel = profile.level || calculateLevel(currentXP);
+
+                const masterBadge = "Master Eco Warrior";
+                const updatedBadges = currentBadges.includes(masterBadge) 
+                    ? currentBadges 
+                    : [...currentBadges, masterBadge];
+
+                const newXP = currentXP + bonusXP;
+                const newLevel = calculateLevel(newXP);
+                const newEcoPoints = currentEcoPoints + bonusEcoPoints;
+
+                const currentAllQuestsCompletedCount = profile.allQuestsCompletedCount || 0;
+                await updateUserProfile(user.uid, {
+                    xp: newXP,
+                    ecoPoints: newEcoPoints,
+                    level: newLevel,
+                    badges: updatedBadges,
+                    allQuestsCompleted: true,
+                    allQuestsCompletedDate: new Date().toISOString(),
+                    allQuestsCompletedCount: currentAllQuestsCompletedCount === 0 ? 1 : currentAllQuestsCompletedCount
+                });
+
+                let missionsCompleted = profile.missionsCompleted || 0;
+                if (!profileData) {
+                    const profileResult = await getUserProfile(user.uid);
+                    if (profileResult.success) {
+                        missionsCompleted = profileResult.data.missionsCompleted || 0;
+                    }
+                }
+
+                updateUI(newXP, newLevel, missionsCompleted, newEcoPoints, user, currentLevel);
+            } catch (error) {
+                console.error("Error awarding bonus rewards:", error);
+            }
+        }
+
+        function calculateQuestProgress(questsData, completedQuestIds) {
+            if (!questsData || !questsData.categories) {
+                return null;
+            }
+
+            const mappedCompletedIds = mapCompletedQuestIds(completedQuestIds);
+
+            const categoryStats = questsData.categories.map(category => {
+                const totalQuests = category.quests.length;
+                const completedQuests = category.quests.filter(quest => 
+                    mappedCompletedIds.includes(quest.id)
+                ).length;
+                
+                const totalCarbonReduction = category.quests.reduce((sum, quest) => {
+                    if (mappedCompletedIds.includes(quest.id)) {
+                        return sum + quest.carbonFootprintReduction;
+                    }
+                    return sum;
+                }, 0);
+
+                const maxCarbonReduction = category.quests.reduce((sum, quest) => 
+                    sum + quest.carbonFootprintReduction, 0
+                );
+
+                return {
+                    id: category.id,
+                    name: category.name,  
+                    icon: category.icon,
+                    color: category.color,
+                    badgeName: category.badgeName,
+                    totalQuests,
+                    completedQuests,
+                    completionPercentage: totalQuests > 0 ? (completedQuests / totalQuests) * 100 : 0,
+                    totalCarbonReduction,
+                    maxCarbonReduction,
+                    carbonPercentage: maxCarbonReduction > 0 ? (totalCarbonReduction / maxCarbonReduction) * 100 : 0
+                };
+            });
+
+            return categoryStats;
+        }
+
+        function renderCategoryProgress(categoryStats) {
+            const progressList = document.getElementById("categoryProgressList");
+            if (!progressList || !categoryStats) return;
+
+            progressList.innerHTML = "";
+
+            categoryStats.forEach(category => {
+                const categoryCard = document.createElement("div");
+                categoryCard.className = "category-progress-card";
+                categoryCard.style.borderLeft = `4px solid ${category.color}`;
+
+                const isCompleted = category.completedQuests === category.totalQuests && category.totalQuests > 0;
+
+                categoryCard.innerHTML = `
+                    <div class="category-progress-header">
+                        <div class="category-info">
+                            <span class="category-icon">${category.icon}</span>
+                            <div>
+                                <h4>${category.name}</h4>
+                                <p class="category-stats">${category.completedQuests} / ${category.totalQuests} quests completed</p>
+                            </div>
+                        </div>
+                        ${isCompleted ? `<span class="category-badge">🏆 ${category.badgeName}</span>` : ''}
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" style="background: ${category.color}20;">
+                            <div class="progress-fill" style="width: ${category.completionPercentage}%; background: ${category.color};"></div>
+                        </div>
+                        <span class="progress-text">${category.completionPercentage.toFixed(0)}%</span>
+                    </div>
+                    <div class="carbon-info">
+                        <span>Carbon Reduced: <strong>${category.totalCarbonReduction.toFixed(1)} / ${category.maxCarbonReduction.toFixed(1)} kg CO₂</strong></span>
+                    </div>
+                `;
+
+                progressList.appendChild(categoryCard);
+            });
+        }
+
+        let resizeTimeout;
+        function handleChartResize() {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                if (categoryChartInstance) {
+                    categoryChartInstance.resize();
+                }
+                if (carbonChartInstance) {
+                    carbonChartInstance.resize();
+                }
+            }, 250);
+        }
+
+        window.addEventListener('resize', handleChartResize);
+
+        function renderCharts(categoryStats) {
+            if (!categoryStats || categoryStats.length === 0) {
+                const categoryWrapper = document.querySelector('#categoryChart')?.parentElement;
+                const carbonWrapper = document.querySelector('#carbonChart')?.parentElement;
+                if (categoryWrapper) {
+                    categoryWrapper.innerHTML = '<h3>Category Completion</h3><p style="text-align: center; color: #999; padding: 40px;">No quest data available</p>';
+                }
+                if (carbonWrapper) {
+                    carbonWrapper.innerHTML = '<h3>Carbon Footprint Reduction</h3><p style="text-align: center; color: #999; padding: 40px;">No quest data available</p>';
+                }
+                return;
+            }
+
+            if (categoryChartInstance) {
+                categoryChartInstance.destroy();
+                categoryChartInstance = null;
+            }
+            if (carbonChartInstance) {
+                carbonChartInstance.destroy();
+                carbonChartInstance = null;
+            }
+
+            let categoryCtx = document.getElementById("categoryChart");
+            let carbonCtx = document.getElementById("carbonChart");
+
+            if (!categoryCtx) {
+                const categoryWrapper = document.querySelector('.chart-wrapper:first-of-type');
+                if (categoryWrapper) {
+                    categoryWrapper.innerHTML = '<h3>Category Completion</h3><canvas id="categoryChart"></canvas>';
+                    categoryCtx = document.getElementById("categoryChart");
+                }
+            }
+
+            if (!carbonCtx) {
+                const carbonWrapper = document.querySelector('.chart-wrapper:last-of-type');
+                if (carbonWrapper) {
+                    carbonWrapper.innerHTML = '<h3>Carbon Footprint Reduction</h3><canvas id="carbonChart"></canvas>';
+                    carbonCtx = document.getElementById("carbonChart");
+                }
+            }
+
+            if (!categoryCtx || !carbonCtx) {
+                console.error("Chart canvas elements not found");
+                return;
+            }
+
+            categoryChartInstance = new Chart(categoryCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: categoryStats.map(cat => `${cat.icon} ${cat.name}`),
+                    datasets: [{
+                        data: categoryStats.map(cat => cat.completedQuests),
+                        backgroundColor: categoryStats.map(cat => cat.color),
+                        borderWidth: 3,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    aspectRatio: window.innerWidth < 640 ? 1.2 : (window.innerWidth < 1024 ? 1.4 : 1.5),
+                    layout: {
+                        padding: {
+                            top: window.innerWidth < 640 ? 8 : 10,
+                            bottom: window.innerWidth < 640 ? 8 : 10,
+                            left: window.innerWidth < 640 ? 5 : 10,
+                            right: window.innerWidth < 640 ? 5 : 10
+                        }
+                    },
+                    onResize: function(chart, size) {
+                        if (size.height < 200) {
+                            chart.options.aspectRatio = 1.2;
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: window.innerWidth < 640 ? 8 : 15,
+                                font: {
+                                    size: window.innerWidth < 640 ? 10 : 11,
+                                    family: 'Inter, sans-serif'
+                                },
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                boxWidth: window.innerWidth < 640 ? 6 : 8,
+                                boxHeight: window.innerWidth < 640 ? 6 : 8
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            titleFont: {
+                                size: 14,
+                                weight: 'bold'
+                            },
+                            bodyFont: {
+                                size: 12
+                            },
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label.replace(/^\S+\s/, '') || '';
+                                    const value = context.parsed || 0;
+                                    const category = categoryStats[context.dataIndex];
+                                    return [
+                                        `${label}`,
+                                        `Completed: ${value} / ${category.totalQuests} quests`,
+                                        `Progress: ${category.completionPercentage.toFixed(0)}%`
+                                    ];
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            const totalCarbonReduced = categoryStats.reduce((sum, cat) => sum + cat.totalCarbonReduction, 0);
+            const totalCarbonPotential = categoryStats.reduce((sum, cat) => sum + cat.maxCarbonReduction, 0);
+            
+            carbonChartInstance = new Chart(carbonCtx, {
+                type: 'bar',
+                data: {
+                    labels: categoryStats.map(cat => `${cat.icon}\n${cat.name}`),
+                    datasets: [
+                        {
+                            label: 'Carbon Reduced',
+                            data: categoryStats.map(cat => cat.totalCarbonReduction),
+                            backgroundColor: categoryStats.map(cat => cat.color),
+                            borderColor: categoryStats.map(cat => cat.color),
+                            borderWidth: 2,
+                            borderRadius: 8,
+                            borderSkipped: false,
+                        },
+                        {
+                            label: 'Remaining Potential',
+                            data: categoryStats.map(cat => cat.maxCarbonReduction - cat.totalCarbonReduction),
+                            backgroundColor: categoryStats.map(cat => cat.color + '40'),
+                            borderColor: categoryStats.map(cat => cat.color),
+                            borderWidth: 1,
+                            borderRadius: {
+                                topLeft: 0,
+                                topRight: 0,
+                                bottomLeft: 8,
+                                bottomRight: 8
+                            },
+                            borderSkipped: false,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    aspectRatio: window.innerWidth < 640 ? 1.3 : (window.innerWidth < 1024 ? 1.5 : 1.6),
+                    layout: {
+                        padding: {
+                            top: window.innerWidth < 640 ? 5 : 10,
+                            bottom: window.innerWidth < 640 ? 5 : 10,
+                            left: window.innerWidth < 640 ? 5 : 10,
+                            right: window.innerWidth < 640 ? 5 : 10
+                        }
+                    },
+                    onResize: function(chart, size) {
+                        if (size.height < 200) {
+                            chart.options.aspectRatio = 1.3;
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            stacked: true,
+                            title: {
+                                display: true,
+                                text: window.innerWidth < 640 ? 'CO₂ Reduced (kg)' : 'Carbon Footprint Reduction (kg CO₂)',
+                                font: {
+                                    size: window.innerWidth < 640 ? 11 : 13,
+                                    weight: 'bold'
+                                },
+                                color: '#424242',
+                                padding: { top: window.innerWidth < 640 ? 5 : 10, bottom: window.innerWidth < 640 ? 5 : 10 }
+                            },
+                            ticks: {
+                                font: {
+                                    size: window.innerWidth < 640 ? 9 : 11
+                                },
+                                callback: function(value) {
+                                    return value.toFixed(window.innerWidth < 640 ? 0 : 1);
+                                },
+                                maxTicksLimit: window.innerWidth < 640 ? 5 : 8
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.08)',
+                                drawBorder: false
+                            }
+                        },
+                        x: {
+                            stacked: true,
+                            ticks: {
+                                font: {
+                                    size: window.innerWidth < 640 ? 9 : 11,
+                                    weight: '500'
+                                },
+                                maxRotation: window.innerWidth < 640 ? 45 : 0,
+                                minRotation: window.innerWidth < 640 ? 45 : 0
+                            },
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                padding: window.innerWidth < 640 ? 10 : 18,
+                                font: {
+                                    size: window.innerWidth < 640 ? 10 : 12,
+                                    family: 'Inter, sans-serif',
+                                    weight: '500'
+                                },
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                boxWidth: window.innerWidth < 640 ? 6 : 8,
+                                boxHeight: window.innerWidth < 640 ? 6 : 8
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+                            padding: 14,
+                            titleFont: {
+                                size: 14,
+                                weight: 'bold',
+                                family: 'Inter, sans-serif'
+                            },
+                            bodyFont: {
+                                size: 12,
+                                family: 'Inter, sans-serif'
+                            },
+                            borderColor: 'rgba(255, 255, 255, 0.1)',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            displayColors: true,
+                            callbacks: {
+                                title: function(context) {
+                                    return categoryStats[context[0].dataIndex].name;
+                                },
+                                label: function(context) {
+                                    const label = context.dataset.label || '';
+                                    const value = context.parsed.y.toFixed(2);
+                                    const category = categoryStats[context.dataIndex];
+                                    
+                                    if (context.datasetIndex === 0) {
+                                        const percentage = category.carbonPercentage.toFixed(0);
+                                        return [
+                                            `${label}: ${value} kg CO₂`,
+                                            `Progress: ${percentage}% of potential`,
+                                            `${category.completedQuests}/${category.totalQuests} quests completed`
+                                        ];
+                                    } else {
+                                        return [
+                                            `${label}: ${value} kg CO₂`,
+                                            `Complete remaining quests to unlock`
+                                        ];
+                                    }
+                                },
+                                footer: function(tooltipItems) {
+                                    if (tooltipItems.length > 0) {
+                                        const category = categoryStats[tooltipItems[0].dataIndex];
+                                        if (category.completedQuests === category.totalQuests && category.totalQuests > 0) {
+                                            return `🏆 ${category.badgeName} Badge Unlocked!`;
+                                        } else if (category.totalQuests > 0) {
+                                            return `Next: ${category.badgeName} (${category.totalQuests - category.completedQuests} quests left)`;
+                                        }
+                                    }
+                                    return '';
+                                }
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 1000,
+                        easing: 'easeOutQuart'
+                    }
+                }
+            });
+        }
+
+        async function updateQuestCharts(completedQuestIds) {
+            try {
+                if (typeof Chart === 'undefined') {
+                    console.error("Chart.js is not loaded");
+                    return;
+                }
+
+                const questsData = await loadQuestsData();
+                if (!questsData) {
+                    console.warn("Could not load quests data");
+                    const progressList = document.getElementById("categoryProgressList");
+                    if (progressList) {
+                        progressList.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">Unable to load quest data. Please refresh the page.</p>';
+                    }
+                    return;
+                }
+
+                const categoryStats = calculateQuestProgress(questsData, completedQuestIds || []);
+                if (!categoryStats || categoryStats.length === 0) {
+                    console.warn("No category stats calculated");
+                    return;
+                }
+
+                const categoryCtx = document.getElementById("categoryChart");
+                const carbonCtx = document.getElementById("carbonChart");
+                
+                if (!categoryCtx || !carbonCtx) {
+                    console.warn("Chart canvas elements not found, waiting for DOM...");
+                    setTimeout(() => updateQuestCharts(completedQuestIds), 200);
+                    return;
+                }
+
+                renderCharts(categoryStats);
+                renderCategoryProgress(categoryStats);
+            } catch (error) {
+                console.error("Error updating quest charts:", error);
+            }
+        }
+
+        function updateUI(xp, level, missionsCompleted, ecoPoints, user = null, oldLevel = null) {
+            const userXPElement = document.getElementById("userXP");
+            const ecoPointsElement = document.getElementById("ecoPoints");
+            
+            if (userXPElement) userXPElement.textContent = xp || 0;
+            
+            const progress = getXPProgress(xp || 0, level || 1);
+            const progressFill = document.getElementById("levelProgressFill");
+            const progressCurrent = document.getElementById("levelProgressCurrent");
+            const progressNext = document.getElementById("levelProgressNext");
+            
+            if (progressFill) {
+                const percentage = Math.min(100, Math.max(0, progress.percentage));
+                progressFill.style.width = `${percentage}%`;
+                const progressBar = progressFill.closest('.level-progress-bar');
+                if (progressBar) {
+                    progressBar.setAttribute('aria-valuenow', Math.round(percentage));
+                }
+            }
+            if (progressCurrent) {
+                progressCurrent.textContent = progress.current;
+            }
+            if (progressNext) {
+                progressNext.textContent = progress.required;
+            }
+            
+            if (ecoPointsElement) ecoPointsElement.textContent = ecoPoints || 0;
+            
+            const badgeElement = document.getElementById("userBadge");
+            if (badgeElement) {
+                displayBadge(badgeElement, level || 1, false);
+            }
+            
+            displayBadgeShowcase(level || 1, false);
+            
+            if (user && oldLevel && level > oldLevel) {
+                checkAndUnlockBadge(user, oldLevel, level);
+            }
+        }
+
+        let currentUser = null;
+        
+        requireAuth().then(async (user) => {
+            currentUser = user;
+            try {
+                const profileResult = await getUserProfile(user.uid);
+                
+                if (profileResult.success) {
+                    const profile = profileResult.data;
+                    const displayName = profile.displayName || user.email.split("@")[0];
+                    const xp = profile.xp || 0;
+                    const ecoPoints = profile.ecoPoints || calculateEcoPoints(xp, profile.level || 1, (profile.badges || []).length);
+                    const missionsCompleted = profile.missionsCompleted || 0;
+                    
+                    const calculatedLevel = calculateLevel(xp);
+                    const storedLevel = profile.level;
+                    const level = calculatedLevel;
+                    const completedQuests = profile.completedQuests || [];
+                    
+                    const userDisplayNameElement = document.getElementById("userDisplayName");
+                    const userEmailElement = document.getElementById("userEmail");
+                    if (userDisplayNameElement) userDisplayNameElement.textContent = displayName || "User";
+                    if (userEmailElement) userEmailElement.textContent = user.email || "Unknown";
+                    
+                    const badgeElement = document.getElementById("userBadge");
+                    if (badgeElement) {
+                        const expectedBadge = getBadgeNameForLevel(level);
+                        const activeBadge = profile.activeBadge;
+                        
+                        displayBadge(badgeElement, level, false);
+                        displayBadgeShowcase(level, false);
+                        
+                        const updates = {};
+                        if (storedLevel !== calculatedLevel) {
+                            updates.level = calculatedLevel;
+                        }
+                        if (activeBadge !== expectedBadge) {
+                            updates.activeBadge = expectedBadge;
+                            updates.badges = [...new Set([...(profile.badges || []), expectedBadge])];
+                        }
+                        if (!profile.ecoPoints || profile.ecoPoints !== ecoPoints) {
+                            updates.ecoPoints = ecoPoints;
+                        }
+                        if (!profile.xp || profile.xp !== xp) {
+                            updates.xp = xp;
+                        }
+                        
+                        if (Object.keys(updates).length > 0) {
+                            await updateUserProfile(user.uid, updates);
+                        }
+                    }
+                    
+                    updateUI(xp, level, missionsCompleted, ecoPoints);
+                    
+                    const allQuestsCheck = await checkAllQuestsCompleted(completedQuests);
+                    if (allQuestsCheck.allCompleted && profile.allQuestsCompleted) {
+                        await showAllQuestsCompletedInfoCard(user);
+                    }
+                    
+                    setTimeout(async () => {
+                        await updateQuestCharts(completedQuests);
+                    }, 300);
+                    
+                    const allQuests = await loadQuests();
+                    const missionListElement = document.getElementById("missionList");
+                    if (allQuests.length === 0) {
+                        if (missionListElement) {
+                            missionListElement.innerHTML = "<p style='color: #999; text-align: center; padding: 20px;'>No missions available. Please check quests.md file.</p>";
+                        }
+                    } else {
+                        const dailyQuestsData = await loadUserDailyQuests(user, allQuests, completedQuests);
+                        window.currentQuests = dailyQuestsData.quests;
+                        await renderQuests(
+                            dailyQuestsData.quests, 
+                            user, 
+                            completedQuests, 
+                            dailyQuestsData.dailyCompleted || []
+                        );
+                    }
+                } else {
+                    const userDisplayNameElement = document.getElementById("userDisplayName");
+                    const userEmailElement = document.getElementById("userEmail");
+                    const missionListElement = document.getElementById("missionList");
+                    
+                    if (userDisplayNameElement) {
+                        userDisplayNameElement.textContent = user.email ? user.email.split("@")[0] : "User";
+                    }
+                    if (userEmailElement) {
+                        userEmailElement.textContent = user.email || "Unknown";
+                    }
+                    if (missionListElement) {
+                        missionListElement.innerHTML = "<p style='color: #d32f2f; text-align: center; padding: 20px;'>Error loading profile. Please refresh the page.</p>";
+                    }
+                }
+            } catch (error) {
+                console.error("Error loading dashboard:", error);
+                const missionListElement = document.getElementById("missionList");
+                const userDisplayNameElement = document.getElementById("userDisplayName");
+                const userEmailElement = document.getElementById("userEmail");
+                
+                if (missionListElement) {
+                    missionListElement.innerHTML = "<p style='color: #d32f2f; text-align: center; padding: 20px;'>Error loading data. Please refresh the page.</p>";
+                }
+                if (userDisplayNameElement) {
+                    userDisplayNameElement.textContent = "Error";
+                }
+                if (userEmailElement) {
+                    userEmailElement.textContent = "Unable to load";
+                }
+            }
+        }).catch((error) => {
+            console.error("Auth error:", error);
+            window.location.href = "login.html";
+        });
+
+        const logoutButton = document.getElementById("logoutButton");
+        if (logoutButton) {
+            logoutButton.addEventListener("click", async () => {
+                stopCountdown();
+                try {
+                    const result = await logOut();
+                    if (result.success) {
+                        window.location.href = "login.html";
+                    } else {
+                        alert("Logout failed: " + (result.error || "Unknown error"));
+                    }
+                } catch (error) {
+                    console.error("Logout error:", error);
+                    alert("An error occurred during logout. Please try again.");
+                }
+            });
+        }
+
+        const mobileMenuToggle = document.getElementById("mobileMenuToggle");
+        const mobileMenu = document.getElementById("mobileMenu");
+        const logoutButtonMobile = document.getElementById("logoutButtonMobile");
+
+        if (mobileMenuToggle && mobileMenu) {
+            mobileMenuToggle.addEventListener("click", () => {
+                const isActive = mobileMenu.classList.contains("active");
+                mobileMenu.classList.toggle("active");
+                mobileMenuToggle.classList.toggle("active");
+                mobileMenuToggle.setAttribute("aria-expanded", !isActive);
+                
+                if (!isActive) {
+                    document.body.style.overflow = "hidden";
+                } else {
+                    document.body.style.overflow = "";
+                }
+            });
+
+            const menuLinks = mobileMenu.querySelectorAll("a");
+            menuLinks.forEach(link => {
+                link.addEventListener("click", () => {
+                    mobileMenu.classList.remove("active");
+                    mobileMenuToggle.classList.remove("active");
+                    mobileMenuToggle.setAttribute("aria-expanded", "false");
+                    document.body.style.overflow = "";
+                });
+            });
+
+            document.addEventListener("click", (e) => {
+                if (mobileMenu.classList.contains("active") && 
+                    !mobileMenu.contains(e.target) && 
+                    !mobileMenuToggle.contains(e.target)) {
+                    mobileMenu.classList.remove("active");
+                    mobileMenuToggle.classList.remove("active");
+                    mobileMenuToggle.setAttribute("aria-expanded", "false");
+                    document.body.style.overflow = "";
+                }
+            });
+        }
+
+        if (logoutButtonMobile) {
+            logoutButtonMobile.addEventListener("click", async () => {
+                stopCountdown();
+                try {
+                    const result = await logOut();
+                    if (result.success) {
+                        window.location.href = "login.html";
+                    } else {
+                        alert("Logout failed: " + (result.error || "Unknown error"));
+                    }
+                } catch (error) {
+                    console.error("Logout error:", error);
+                    alert("An error occurred during logout. Please try again.");
+                }
+            });
+        }
+
+        window.addEventListener("beforeunload", () => {
+            stopCountdown();
+            if (categoryChartInstance) {
+                categoryChartInstance.destroy();
+                categoryChartInstance = null;
+            }
+            if (carbonChartInstance) {
+                carbonChartInstance.destroy();
+                carbonChartInstance = null;
+            }
+        });
+        
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden) {
+            }
+        });
+    </script>
+</body>
+</html>
