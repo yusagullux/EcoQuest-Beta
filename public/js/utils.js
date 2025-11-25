@@ -86,6 +86,8 @@ export function formatErrorMessage(error) {
         return 'An unexpected error occurred. Please try again.';
     }
     
+    // Check error.code first (Firebase standard)
+    const errorCode = error.code || '';
     const errorMessage = error.message || error.toString();
     
     const userFriendlyMessages = {
@@ -94,19 +96,30 @@ export function formatErrorMessage(error) {
         'auth/weak-password': 'Password is too weak. Please choose a stronger password.',
         'auth/user-not-found': 'No account found with this email address.',
         'auth/wrong-password': 'Incorrect password. Please try again.',
+        'auth/invalid-credential': 'Invalid email or password. Please check your credentials and try again.',
+        'auth/invalid-login-credentials': 'Invalid email or password. Please check your credentials and try again.',
         'auth/too-many-requests': 'Too many failed attempts. Please try again later.',
         'auth/network-request-failed': 'Network error. Please check your connection and try again.',
+        'auth/user-disabled': 'This account has been disabled. Please contact support.',
+        'auth/operation-not-allowed': 'This sign-in method is not enabled.',
         'permission-denied': 'You do not have permission to perform this action.',
         'unavailable': 'Service is temporarily unavailable. Please try again later.'
     };
     
+    // First check error.code
+    if (errorCode && userFriendlyMessages[errorCode]) {
+        return userFriendlyMessages[errorCode];
+    }
+    
+    // Then check error.message
     for (const [key, message] of Object.entries(userFriendlyMessages)) {
         if (errorMessage.includes(key)) {
             return message;
         }
     }
     
-    return errorMessage || 'An error occurred. Please try again.';
+    // Return a generic message if no match found
+    return 'Invalid email or password. Please check your credentials and try again.';
 }
 
 export function checkOnlineStatus() {

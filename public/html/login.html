@@ -96,7 +96,8 @@
           if (result.success) {
             window.location.href = "dashboard.html";
           } else {
-            showError(formatErrorMessage(result.error || new Error("Login failed")));
+            const error = result.error || { code: 'auth/unknown-error', message: 'Login failed' };
+            showError(formatErrorMessage(error));
             setLoadingState(false);
           }
         } catch (error) {

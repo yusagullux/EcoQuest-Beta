@@ -61,8 +61,8 @@ export async function signIn(email, password) {
     return { success: true, user: userCredential.user };
   } catch (error) {
     console.error("Sign in error:", error);
-    const errorMessage = error.code || error.message || "Failed to sign in";
-    return { success: false, error: errorMessage };
+    // Return the full error object so formatErrorMessage can access error.code
+    return { success: false, error: error };
   }
 }
 
