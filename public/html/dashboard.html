@@ -735,6 +735,22 @@
                     const currentQuestCompletionCount = profile.questCompletionCount || {};
                     const allQuestsCompleted = profile.allQuestsCompleted || false;
                     
+                    // Time-based verification: Check if missions are being completed too quickly
+                    const lastCompletionTime = profile.lastQuestCompletionTime || null;
+                    const now = new Date().getTime();
+                    const MIN_TIME_BETWEEN_QUESTS = 30000; // 30 seconds minimum between quest completions
+                    
+                    if (lastCompletionTime) {
+                        const timeSinceLastCompletion = now - new Date(lastCompletionTime).getTime();
+                        if (timeSinceLastCompletion < MIN_TIME_BETWEEN_QUESTS) {
+                            const remainingTime = Math.ceil((MIN_TIME_BETWEEN_QUESTS - timeSinceLastCompletion) / 1000);
+                            completeButton.disabled = false;
+                            completeButton.textContent = "Complete Selected Missions";
+                            alert(`Please wait ${remainingTime} more seconds before completing missions. This helps ensure tasks are actually completed.`);
+                            return;
+                        }
+                    }
+                    
                     let totalXP = 0;
                     const completedQuestIdsToAdd = [];
                     
