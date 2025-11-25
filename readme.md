@@ -4,16 +4,16 @@
 
 **Gamified Environmental Sustainability Platform**
 
-[![Website](https://img.shields.io/badge/Website-Visit%20EcoQuest-4CAF50?style=for-the-badge)](https://ecoquest-9332a.web.app)
-[![Firebase](https://img.shields.io/badge/Firebase-Hosted-FFCA28?logo=firebase&logoColor=black)](https://firebase.google.com/)
+[![Website](https://img.shields.io/badge/Website-Visit%20EcoQuest-4CAF50?style=for-the-badge)](https://yusagullux.github.io/EcoQuest)
+[![GitHub Pages](https://img.shields.io/badge/GitHub-Pages-181717?logo=github&logoColor=white)](https://pages.github.com/)
 
 **Making saving the planet fun and interactive through gamification**
 
 ---
 
-## 🚀 [Visit EcoQuest Website →](https://ecoquest-9332a.web.app)
+## 🚀 [Visit EcoQuest Website →](https://yusagullux.github.io/EcoQuest)
 
-**Or use the direct link:** [https://ecoquest-9332a.web.app](https://ecoquest-9332a.web.app)
+**Or use the direct link:** [https://yusagullux.github.io/EcoQuest](https://yusagullux.github.io/EcoQuest)
 
 ---
 
