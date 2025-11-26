@@ -84,6 +84,17 @@
     }
 }
 
+/* CO₂ Reduced card spans 2 columns (flex: 2 equivalent) */
+.profile-stat-card.carbon-reduction-card {
+    grid-column: span 2;
+}
+
+@media (min-width: 768px) {
+    .profile-stat-card.carbon-reduction-card {
+        grid-column: span 2;
+    }
+}
+
 .profile-stat-card {
     background: var(--color-white);
     padding: var(--spacing-md);
