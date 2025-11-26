@@ -361,6 +361,7 @@ main {
     margin-right: auto;
     padding: 0;
     gap: var(--spacing-xs);
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
@@ -373,9 +374,16 @@ main {
 
 @media (min-width: 768px) {
   .user-stats {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: var(--spacing-md);
     margin-bottom: var(--spacing-lg);
+  }
+}
+
+@media (min-width: 1024px) {
+  .user-stats {
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--spacing-lg);
   }
 }
 
@@ -388,6 +396,17 @@ main {
   transition: var(--transition);
   width: 100%;
   box-sizing: border-box;
+}
+
+/* CO₂ Reduced kartı için grid-column: span 2 (flex: 2 equivalent) */
+.stat-card[aria-label="Carbon Reduction"] {
+  grid-column: span 2;
+}
+
+@media (min-width: 768px) {
+  .stat-card[aria-label="Carbon Reduction"] {
+    grid-column: span 2;
+  }
 }
 
 @media (max-width: 767px) {

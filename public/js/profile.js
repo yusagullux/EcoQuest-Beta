@@ -33,7 +33,7 @@ function getBadgeImageForLevel(level) {
         6: "../images/ecoquests-badges/bear-badge-removedbg.png",
         7: "../images/ecoquests-badges/eagle-badge-removedbg.png",
         8: "../images/ecoquests-badges/tiger-badge-removedbg.png",
-        9: "../images/ecoquests-badges/dragon-badge-removedbg.png"
+        9: "../images/ecoquests-badges/lion-badge-removedbg.png"
     };
     return badgeImages[level] || badgeImages[1];
 }
@@ -217,6 +217,90 @@ function filterCollection(rarity) {
 }
 
 // ============================================
+// CARBON REDUCTION CALCULATION
+// ============================================
+
+async function loadQuestsData() {
+    try {
+        const response = await fetch('../quests.json');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error("Error loading quests.json:", error);
+        return null;
+    }
+}
+
+function mapCompletedQuestIds(completedQuestIds) {
+    // Quest ID mapping from dashboard
+    const QUEST_ID_MAPPING = {
+        "1": { jsonIds: ["recycling_1", "cleanup_1"] },
+        "2": { jsonIds: ["energy_1"] },
+        "3": { jsonIds: ["recycling_2"] },
+        "4": { jsonIds: ["transportation_1"] },
+        "5": { jsonIds: ["water_1"] },
+        "6": { jsonIds: ["recycling_3", "cleanup_2"] },
+        "7": { jsonIds: ["recycling_4"] },
+        "8": { jsonIds: ["water_2"] },
+        "9": { jsonIds: ["recycling_5"] },
+        "10": { jsonIds: ["energy_2"] },
+        "11": { jsonIds: ["energy_3"] },
+        "12": { jsonIds: ["gardening_1"] },
+        "13": { jsonIds: ["transportation_2"] },
+        "14": { jsonIds: ["sustainable_1"] },
+        "15": { jsonIds: ["sustainable_2"] },
+        "16": { jsonIds: ["energy_4"] },
+        "17": { jsonIds: ["sustainable_3"] },
+        "18": { jsonIds: ["energy_5"] },
+        "19": { jsonIds: ["recycling_6"] },
+        "20": { jsonIds: ["cleanup_3"] },
+        "21": { jsonIds: ["energy_6"] },
+        "22": { jsonIds: ["transportation_3"] },
+        "23": { jsonIds: ["sustainable_4"] },
+        "24": { jsonIds: ["energy_7"] },
+        "25": { jsonIds: ["gardening_2"] }
+    };
+    
+    const mappedIds = new Set();
+    completedQuestIds.forEach(id => {
+        const mapped = QUEST_ID_MAPPING[id];
+        if (mapped && mapped.jsonIds) {
+            mapped.jsonIds.forEach(mappedId => mappedIds.add(mappedId));
+        }
+    });
+    return Array.from(mappedIds);
+}
+
+async function calculateTotalCarbonReduction(completedQuestIds) {
+    try {
+        const questsData = await loadQuestsData();
+        if (!questsData || !questsData.categories) {
+            return 0;
+        }
+
+        const mappedCompletedIds = mapCompletedQuestIds(completedQuestIds || []);
+        let totalCarbon = 0;
+
+        questsData.categories.forEach(category => {
+            if (!category || !category.quests) return;
+            
+            category.quests.forEach(quest => {
+                if (quest && mappedCompletedIds.includes(quest.id)) {
+                    totalCarbon += quest.carbonFootprintReduction || 0;
+                }
+            });
+        });
+
+        return totalCarbon;
+    } catch (error) {
+        console.error("Error calculating total carbon reduction:", error);
+        return 0;
+    }
+}
+
+// ============================================
 // DATA LOADING
 // ============================================
 
@@ -248,6 +332,7 @@ async function loadProfileData() {
         const profileLevel = document.getElementById("profileLevel");
         const missionsCompletedEl = document.getElementById("missionsCompleted");
         const totalPlantsEl = document.getElementById("totalPlants");
+        const totalCarbonReducedEl = document.getElementById("totalCarbonReduced");
         const replayModeCard = document.getElementById("replayModeCard");
         const replayModeCount = document.getElementById("replayModeCount");
 
@@ -260,6 +345,13 @@ async function loadProfileData() {
         if (profileLevel) profileLevel.textContent = level;
         if (missionsCompletedEl) missionsCompletedEl.textContent = missionsCompleted;
         if (totalPlantsEl) totalPlantsEl.textContent = userCollection.length;
+        
+        // Calculate and display total carbon reduction
+        const completedQuests = profile.completedQuests || [];
+        const totalCarbon = await calculateTotalCarbonReduction(completedQuests);
+        if (totalCarbonReducedEl) {
+            totalCarbonReducedEl.textContent = totalCarbon.toFixed(1);
+        }
         
         // Show replay mode card if all quests are completed
         if (replayModeCard && replayModeCount) {

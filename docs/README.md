@@ -37,7 +37,7 @@ Our mission is to inspire millions of people to adopt eco-friendly habits throug
   - Replay mode with bonus rewards for completed quests
 
 - **🏆 Gamification System**
-  - **XP & Leveling**: 9 levels with unique badges (Cat → Dragon)
+  - **XP & Leveling**: 9 levels with unique badges (Cat → Lion)
   - **EcoPoints**: Virtual currency for shop purchases
   - **Badge System**: Unlock badges as you level up
   - **Achievement Tracking**: Master Eco Warrior badge for completing all quests
@@ -237,7 +237,7 @@ EcoQuest/
 | 6 | 2,500 XP | 🐻 Bear |
 | 7 | 5,000 XP | 🦅 Eagle |
 | 8 | 10,000 XP | 🐯 Tiger |
-| 9 | 50,000 XP | 🐉 Dragon |
+| 9 | 50,000 XP | 🦁 Lion |
 
 ### EcoPoints System
 

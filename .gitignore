@@ -45,7 +45,5 @@ build/
 *.bak
 *.backup
 
-# Firebase config (if sensitive)
-# Uncomment if you don't want to commit your config
-# public/js/firebase-config.js
+
 

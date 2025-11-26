@@ -10,7 +10,7 @@
 **Level 6:** 2,500 XP  - Bear badge
 **Level 7:** 5,000 XP  - Eagle Badge
 **Level 8:** 10,000 XP  - Tiger Badge
-**Level 9:** 50,000 XP  - Dragon Badge
+**Level 9:** 50,000 XP  - Lion Badge
 
 ---
 
