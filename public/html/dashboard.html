@@ -559,7 +559,6 @@
         async function detectAbnormalPattern(profile, questIds, questStartTimes) {
             try {
                 if (!profile || typeof profile !== 'object') {
-                    console.warn("Invalid profile in detectAbnormalPattern");
                     return [];
                 }
                 
@@ -567,25 +566,9 @@
                     return [];
                 }
                 
-                if (!questStartTimes || typeof questStartTimes !== 'object') {
-                    questStartTimes = {};
-                }
-                
-                const now = new Date().getTime();
                 const warnings = [];
                 
-                // 1. Check for too many quests completed at the same time
-                if (questIds.length > 3) {
-                    warnings.push({
-                        type: "too_many_quests",
-                        message: `Completing ${questIds.length} quests at the same time seems suspicious. Please make sure you have actually completed the quests.`
-                    });
-                }
-                
-                // 2. Quest start time check - DISABLED (time limits removed)
-                // Time-based verification has been removed - users can complete quests immediately
-                
-                // 3. Daily quest limit check
+                // Only check daily limit (5 quests per day) - no other verification required
                 const today = getTodayDateString();
                 const dailyCompletions = profile.dailyQuestCompletions || {};
                 const todayCompletions = Array.isArray(dailyCompletions[today]) 
@@ -594,24 +577,18 @@
                 const uniqueQuestIds = [...new Set(questIds)];
                 const newTotal = todayCompletions.length + uniqueQuestIds.length;
                 
-                const MAX_DAILY_QUESTS = 10; // Maximum daily quest count
+                const MAX_DAILY_QUESTS = 5; // Maximum 5 quests per day
                 if (newTotal > MAX_DAILY_QUESTS) {
                     warnings.push({
                         type: "daily_limit",
-                        message: `You are exceeding the daily quest limit (${MAX_DAILY_QUESTS} quests/day). You have completed ${todayCompletions.length} quests today.`
+                        message: `You can only complete ${MAX_DAILY_QUESTS} quests per day. You have already completed ${todayCompletions.length} quests today.`
                     });
                 }
-                
-                // 4. Check for too fast consecutive completions - DISABLED (time limits removed)
                 
                 return warnings;
             } catch (error) {
                 console.error("Error in detectAbnormalPattern:", error);
-                // Stay on the safe side in case of error - return warning
-                return [{
-                    type: "system_error",
-                    message: "A system error occurred. Please refresh the page and try again."
-                }];
+                return [];
             }
         }
 
@@ -868,19 +845,7 @@
                 missionItem.appendChild(questContent);
                 missionList.appendChild(missionItem);
                 
-                // Quest start tracking: save time when checkbox is checked
-                if (!isCompleted && currentUser && currentUser.uid && quest && quest.id) {
-                    checkbox.addEventListener('change', async (e) => {
-                        try {
-                            if (e.target && e.target.checked && currentUser && currentUser.uid) {
-                                await startQuestTracking(quest.id, currentUser.uid);
-                            }
-                        } catch (error) {
-                            console.error("Error in checkbox change handler:", error);
-                            // Continue silently in case of error
-                        }
-                    });
-                }
+                // Quest start tracking disabled - no verification required
             });
 
             const completeButton = document.createElement("button");
@@ -933,45 +898,26 @@
                         }
                     });
                     
+                    // Check only daily limit (5 quests per day) - no other verification required
                     if (selectedQuestIds.length > 0) {
                         const warnings = await detectAbnormalPattern(profile, selectedQuestIds, questStartTimes);
                         
                         if (!Array.isArray(warnings)) {
                             console.error("detectAbnormalPattern returned invalid result");
-                            throw new Error("A system error occurred. Please try again.");
+                            warnings = [];
                         }
                         
-                        // Stop quest if there are critical warnings
-                        const criticalWarnings = warnings.filter(w => 
-                            w && w.type && (
-                                w.type === "daily_limit" ||
-                                w.type === "system_error"
-                            )
+                        // Stop quest if daily limit exceeded
+                        const dailyLimitWarnings = warnings.filter(w => 
+                            w && w.type && w.type === "daily_limit"
                         );
                         
-                        if (criticalWarnings.length > 0) {
+                        if (dailyLimitWarnings.length > 0) {
                             completeButton.disabled = false;
                             completeButton.textContent = "Complete Selected Missions";
-                            const errorMessages = criticalWarnings.map(w => w.message || "Unknown error").join('\n\n');
-                            alert(`⚠️ Quest Verification Error\n\n${errorMessages}`);
+                            const errorMessages = dailyLimitWarnings.map(w => w.message || "Daily limit exceeded").join('\n\n');
+                            alert(`⚠️ Daily Quest Limit\n\n${errorMessages}`);
                             return;
-                        }
-                        
-                        // Notify user if there are warnings but continue
-                        const nonCriticalWarnings = warnings.filter(w => 
-                            w && w.type && (
-                                w.type === "too_many_quests"
-                            )
-                        );
-                        
-                        if (nonCriticalWarnings.length > 0) {
-                            const warningMessages = nonCriticalWarnings.map(w => w.message || "Warning").join('\n\n');
-                            const proceed = confirm(`⚠️ Warning\n\n${warningMessages}\n\nDo you want to continue anyway?`);
-                            if (!proceed) {
-                                completeButton.disabled = false;
-                                completeButton.textContent = "Complete Selected Missions";
-                                return;
-                            }
                         }
                     }
                     
