@@ -500,7 +500,7 @@
             return Math.min(bonus, 3.0);
         }
 
-        // Gelişmiş Zaman ve Davranış Analizi Sistemi
+        // Advanced Time and Behavior Analysis System
         async function getQuestMinimumTime(questId) {
             try {
                 if (!questId || typeof questId !== 'string') {
@@ -509,15 +509,15 @@
                 
                 const questsData = await loadQuestsData();
                 if (!questsData || !questsData.categories || !Array.isArray(questsData.categories)) {
-                    return 5 * 60 * 1000; // Varsayılan: 5 dakika
+                    return 5 * 60 * 1000; // Default: 5 minutes
                 }
                 
                 const mapping = QUEST_ID_MAPPING[questId];
                 if (!mapping || !mapping.jsonIds || !Array.isArray(mapping.jsonIds)) {
-                    return 5 * 60 * 1000; // Varsayılan: 5 dakika
+                    return 5 * 60 * 1000; // Default: 5 minutes
                 }
                 
-                // quests.json'dan görev bilgilerini bul
+                // Find quest information from quests.json
                 for (const category of questsData.categories) {
                     if (!category || !category.quests || !Array.isArray(category.quests)) continue;
                     
@@ -530,29 +530,29 @@
                                 return 5 * 60 * 1000;
                             }
                             
-                            // Görev türüne göre minimum süre belirle
+                            // Determine minimum time based on quest type
                             if (progressLogic.type === "duration") {
-                                // Süre bazlı görevler: belirtilen dakika + 2 dakika buffer
+                                // Duration-based quests: specified minutes + 2 minutes buffer
                                 const minutes = Number(progressLogic.max) || 0;
                                 if (minutes < 0) return 5 * 60 * 1000;
                                 return (minutes + 2) * 60 * 1000;
                             } else if (progressLogic.type === "count") {
-                                // Sayı bazlı görevler: her item için 3 dakika
+                                // Count-based quests: 3 minutes per item
                                 const count = Number(progressLogic.max) || 1;
                                 if (count < 1) return 5 * 60 * 1000;
                                 return count * 3 * 60 * 1000;
                             } else if (progressLogic.type === "boolean") {
-                                // Günlük görevler: minimum 2 saat
+                                // Daily quests: minimum 2 hours
                                 return 2 * 60 * 60 * 1000;
                             }
                         }
                     }
                 }
                 
-                return 5 * 60 * 1000; // Varsayılan: 5 dakika
+                return 5 * 60 * 1000; // Default: 5 minutes
             } catch (error) {
                 console.error("Error getting quest minimum time:", error);
-                return 5 * 60 * 1000; // Varsayılan: 5 dakika
+                return 5 * 60 * 1000; // Default: 5 minutes
             }
         }
 
@@ -574,15 +574,15 @@
                 const now = new Date().getTime();
                 const warnings = [];
                 
-                // 1. Çok fazla görev aynı anda tamamlama kontrolü
+                // 1. Check for too many quests completed at the same time
                 if (questIds.length > 3) {
                     warnings.push({
                         type: "too_many_quests",
-                        message: `Aynı anda ${questIds.length} görev tamamlamak şüpheli görünüyor. Lütfen görevleri gerçekten tamamladığınızdan emin olun.`
+                        message: `Completing ${questIds.length} quests at the same time seems suspicious. Please make sure you have actually completed the quests.`
                     });
                 }
                 
-                // 2. Görev başlatma zamanı kontrolü - Paralel işlem için Promise.all kullan
+                // 2. Quest start time check - Use Promise.all for parallel processing
                 const questTimeChecks = questIds.map(async (questId) => {
                     if (!questId || typeof questId !== 'string') return null;
                     
@@ -593,23 +593,23 @@
                         try {
                             const startDate = new Date(startTime);
                             if (isNaN(startDate.getTime())) {
-                                // Geçersiz tarih
+                                // Invalid date
                                 const minMinutes = Math.ceil(minTime / (60 * 1000));
                                 return {
                                     type: "no_start_time",
                                     questId: questId,
-                                    message: `Bu görev başlatılmamış görünüyor. Lütfen görevi başlatıp en az ${minMinutes} dakika geçtikten sonra tamamlayın.`
+                                    message: `This quest doesn't appear to have been started. Please start the quest and wait at least ${minMinutes} minutes before completing it.`
                                 };
                             }
                             
                             const timeElapsed = now - startDate.getTime();
                             
                             if (timeElapsed < 0) {
-                                // Gelecekteki tarih - hata
+                                // Future date - error
                                 return {
                                     type: "invalid_time",
                                     questId: questId,
-                                    message: "Görev başlatma zamanı geçersiz. Lütfen görevi tekrar başlatın."
+                                    message: "Quest start time is invalid. Please start the quest again."
                                 };
                             }
                             
@@ -618,7 +618,7 @@
                                 return {
                                     type: "insufficient_time",
                                     questId: questId,
-                                    message: `Bu görev için yeterli süre geçmedi. Lütfen en az ${remainingMinutes} dakika daha bekleyin.`
+                                    message: `Not enough time has passed for this quest. Please wait at least ${remainingMinutes} more minutes.`
                                 };
                             }
                         } catch (error) {
@@ -627,16 +627,16 @@
                             return {
                                 type: "no_start_time",
                                 questId: questId,
-                                message: `Bu görev başlatılmamış görünüyor. Lütfen görevi başlatıp en az ${minMinutes} dakika geçtikten sonra tamamlayın.`
+                                message: `This quest doesn't appear to have been started. Please start the quest and wait at least ${minMinutes} minutes before completing it.`
                             };
                         }
                     } else {
-                        // Görev başlatılmamış, minimum genel süre kontrolü
+                        // Quest not started, check minimum general time
                         const minMinutes = Math.ceil(minTime / (60 * 1000));
                         return {
                             type: "no_start_time",
                             questId: questId,
-                            message: `Bu görev başlatılmamış görünüyor. Lütfen görevi başlatıp en az ${minMinutes} dakika geçtikten sonra tamamlayın.`
+                            message: `This quest doesn't appear to have been started. Please start the quest and wait at least ${minMinutes} minutes before completing it.`
                         };
                     }
                     
@@ -648,37 +648,37 @@
                     if (result) warnings.push(result);
                 });
                 
-                // 3. Günlük görev limiti kontrolü
+                // 3. Daily quest limit check
                 const today = getTodayDateString();
                 const dailyCompletions = profile.dailyQuestCompletions || {};
                 const todayCompletions = Array.isArray(dailyCompletions[today]) 
-                    ? [...new Set(dailyCompletions[today])] // Unique görevler
+                    ? [...new Set(dailyCompletions[today])] // Unique quests
                     : [];
                 const uniqueQuestIds = [...new Set(questIds)];
                 const newTotal = todayCompletions.length + uniqueQuestIds.length;
                 
-                const MAX_DAILY_QUESTS = 10; // Günlük maksimum görev sayısı
+                const MAX_DAILY_QUESTS = 10; // Maximum daily quest count
                 if (newTotal > MAX_DAILY_QUESTS) {
                     warnings.push({
                         type: "daily_limit",
-                        message: `Günlük görev limitini aşıyorsunuz (${MAX_DAILY_QUESTS} görev/gün). Bugün ${todayCompletions.length} görev tamamladınız.`
+                        message: `You are exceeding the daily quest limit (${MAX_DAILY_QUESTS} quests/day). You have completed ${todayCompletions.length} quests today.`
                     });
                 }
                 
-                // 4. Çok hızlı ardışık tamamlanma kontrolü
+                // 4. Check for too fast consecutive completions
                 const lastCompletionTime = profile.lastQuestCompletionTime;
                 if (lastCompletionTime) {
                     try {
                         const lastDate = new Date(lastCompletionTime);
                         if (!isNaN(lastDate.getTime())) {
                             const timeSinceLast = now - lastDate.getTime();
-                            const MIN_TIME_BETWEEN_BATCHES = 10 * 60 * 1000; // 10 dakika
+                            const MIN_TIME_BETWEEN_BATCHES = 10 * 60 * 1000; // 10 minutes
                             
                             if (timeSinceLast >= 0 && timeSinceLast < MIN_TIME_BETWEEN_BATCHES && questIds.length > 1) {
                                 const remainingMinutes = Math.ceil((MIN_TIME_BETWEEN_BATCHES - timeSinceLast) / (60 * 1000));
                                 warnings.push({
                                     type: "too_fast",
-                                    message: `Görevleri çok hızlı tamamlıyorsunuz. Lütfen ${remainingMinutes} dakika daha bekleyin.`
+                                    message: `You are completing quests too quickly. Please wait ${remainingMinutes} more minutes.`
                                 });
                             }
                         }
@@ -690,10 +690,10 @@
                 return warnings;
             } catch (error) {
                 console.error("Error in detectAbnormalPattern:", error);
-                // Hata durumunda güvenli tarafta kal - uyarı döndür
+                // Stay on the safe side in case of error - return warning
                 return [{
                     type: "system_error",
-                    message: "Sistem hatası oluştu. Lütfen sayfayı yenileyip tekrar deneyin."
+                    message: "A system error occurred. Please refresh the page and try again."
                 }];
             }
         }
@@ -734,7 +734,7 @@
                 });
             } catch (error) {
                 console.error("Error starting quest tracking:", error);
-                // Hata durumunda sessizce devam et - görev takibi kritik değil
+                // Continue silently in case of error - quest tracking is not critical
             }
         }
 
@@ -951,7 +951,7 @@
                 missionItem.appendChild(questContent);
                 missionList.appendChild(missionItem);
                 
-                // Görev başlatma takibi: checkbox işaretlendiğinde zaman kaydet
+                // Quest start tracking: save time when checkbox is checked
                 if (!isCompleted && currentUser && currentUser.uid && quest && quest.id) {
                     checkbox.addEventListener('change', async (e) => {
                         try {
@@ -960,7 +960,7 @@
                             }
                         } catch (error) {
                             console.error("Error in checkbox change handler:", error);
-                            // Hata durumunda sessizce devam et
+                            // Continue silently in case of error
                         }
                     });
                 }
@@ -975,7 +975,7 @@
             completeButton.addEventListener("click", async () => {
                 // Güvenlik kontrolleri
                 if (!currentUser || !currentUser.uid) {
-                    alert("Kullanıcı bilgisi bulunamadı. Lütfen sayfayı yenileyin.");
+                    alert("User information not found. Please refresh the page.");
                     return;
                 }
                 
@@ -1003,7 +1003,7 @@
                     const allQuestsCompleted = profile.allQuestsCompleted || false;
                     const questStartTimes = profile.questStartTimes || {};
                     
-                    // Gelişmiş zaman ve davranış analizi
+                    // Advanced time and behavior analysis
                     const selectedQuestIds = [];
                     checkboxes.forEach(checkbox => {
                         if (!checkbox) return;
@@ -1021,10 +1021,10 @@
                         
                         if (!Array.isArray(warnings)) {
                             console.error("detectAbnormalPattern returned invalid result");
-                            throw new Error("Sistem hatası oluştu. Lütfen tekrar deneyin.");
+                            throw new Error("A system error occurred. Please try again.");
                         }
                         
-                        // Kritik uyarılar varsa görevi durdur
+                        // Stop quest if there are critical warnings
                         const criticalWarnings = warnings.filter(w => 
                             w && w.type && (
                                 w.type === "insufficient_time" || 
@@ -1038,12 +1038,12 @@
                         if (criticalWarnings.length > 0) {
                             completeButton.disabled = false;
                             completeButton.textContent = "Complete Selected Missions";
-                            const errorMessages = criticalWarnings.map(w => w.message || "Bilinmeyen hata").join('\n\n');
-                            alert(`⚠️ Görev Doğrulama Hatası\n\n${errorMessages}`);
+                            const errorMessages = criticalWarnings.map(w => w.message || "Unknown error").join('\n\n');
+                            alert(`⚠️ Quest Verification Error\n\n${errorMessages}`);
                             return;
                         }
                         
-                        // Uyarılar varsa kullanıcıya bildir ama devam et
+                        // Notify user if there are warnings but continue
                         const nonCriticalWarnings = warnings.filter(w => 
                             w && w.type && (
                                 w.type === "too_many_quests" || 
@@ -1052,8 +1052,8 @@
                         );
                         
                         if (nonCriticalWarnings.length > 0) {
-                            const warningMessages = nonCriticalWarnings.map(w => w.message || "Uyarı").join('\n\n');
-                            const proceed = confirm(`⚠️ Uyarı\n\n${warningMessages}\n\nYine de devam etmek istiyor musunuz?`);
+                            const warningMessages = nonCriticalWarnings.map(w => w.message || "Warning").join('\n\n');
+                            const proceed = confirm(`⚠️ Warning\n\n${warningMessages}\n\nDo you want to continue anyway?`);
                             if (!proceed) {
                                 completeButton.disabled = false;
                                 completeButton.textContent = "Complete Selected Missions";
@@ -1066,7 +1066,7 @@
                     const completedQuestIdsToAdd = [];
                     
                     if (!Array.isArray(quests) || quests.length === 0) {
-                        throw new Error("Görev listesi yüklenemedi. Lütfen sayfayı yenileyin.");
+                        throw new Error("Failed to load quest list. Please refresh the page.");
                     }
                     
                     checkboxes.forEach(checkbox => {
@@ -1128,7 +1128,7 @@
                         return;
                     }
                     
-                    // Unique görev ID'leri
+                    // Unique quest IDs
                     const uniqueCompletedQuestIds = [...new Set(completedQuestIdsToAdd)];
                     
                     const currentXP = profile.xp || 0;
@@ -1190,7 +1190,7 @@
                         newAllQuestsCompletedCount = 1;
                     }
                     
-                    // Günlük tamamlanma kayıtlarını güncelle (unique görevler)
+                    // Update daily completion records (unique quests)
                     const today = getTodayDateString();
                     let dailyCompletions = profile.dailyQuestCompletions || {};
                     if (typeof dailyCompletions !== 'object') {
@@ -1201,7 +1201,7 @@
                         : [];
                     dailyCompletions[today] = [...new Set([...todayCompletions, ...uniqueCompletedQuestIds])];
                     
-                    // Tamamlanan görevlerin başlatma zamanlarını temizle
+                    // Clear start times of completed quests
                     const updatedQuestStartTimes = { ...questStartTimes };
                     if (typeof updatedQuestStartTimes !== 'object') {
                         updatedQuestStartTimes = {};
