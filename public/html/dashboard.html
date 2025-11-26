@@ -500,61 +500,7 @@
             return Math.min(bonus, 3.0);
         }
 
-        // Advanced Time and Behavior Analysis System
-        async function getQuestMinimumTime(questId) {
-            try {
-                if (!questId || typeof questId !== 'string') {
-                    return 5 * 60 * 1000; 
-                }
-                
-                const questsData = await loadQuestsData();
-                if (!questsData || !questsData.categories || !Array.isArray(questsData.categories)) {
-                    return 5 * 60 * 1000; // Default: 5 minutes
-                }
-                
-                const mapping = QUEST_ID_MAPPING[questId];
-                if (!mapping || !mapping.jsonIds || !Array.isArray(mapping.jsonIds)) {
-                    return 5 * 60 * 1000; // Default: 5 minutes
-                }
-                
-                // Find quest information from quests.json
-                for (const category of questsData.categories) {
-                    if (!category || !category.quests || !Array.isArray(category.quests)) continue;
-                    
-                    for (const quest of category.quests) {
-                        if (!quest || !quest.id) continue;
-                        
-                        if (mapping.jsonIds.includes(quest.id)) {
-                            const progressLogic = quest.progressLogic;
-                            if (!progressLogic || typeof progressLogic !== 'object') {
-                                return 5 * 60 * 1000;
-                            }
-                            
-                            // Determine minimum time based on quest type
-                            if (progressLogic.type === "duration") {
-                                // Duration-based quests: specified minutes + 2 minutes buffer
-                                const minutes = Number(progressLogic.max) || 0;
-                                if (minutes < 0) return 5 * 60 * 1000;
-                                return (minutes + 2) * 60 * 1000;
-                            } else if (progressLogic.type === "count") {
-                                // Count-based quests: 3 minutes per item
-                                const count = Number(progressLogic.max) || 1;
-                                if (count < 1) return 5 * 60 * 1000;
-                                return count * 3 * 60 * 1000;
-                            } else if (progressLogic.type === "boolean") {
-                                // Daily quests: minimum 2 hours
-                                return 2 * 60 * 60 * 1000;
-                            }
-                        }
-                    }
-                }
-                
-                return 5 * 60 * 1000; // Default: 5 minutes
-            } catch (error) {
-                console.error("Error getting quest minimum time:", error);
-                return 5 * 60 * 1000; // Default: 5 minutes
-            }
-        }
+        // Time-based verification removed - users can complete quests immediately
 
         async function detectAbnormalPattern(profile, questIds, questStartTimes) {
             try {
@@ -592,45 +538,7 @@
             }
         }
 
-        async function startQuestTracking(questId, userId) {
-            try {
-                if (!questId || typeof questId !== 'string') {
-                    console.warn("Invalid questId in startQuestTracking");
-                    return;
-                }
-                
-                if (!userId || typeof userId !== 'string') {
-                    console.warn("Invalid userId in startQuestTracking");
-                    return;
-                }
-                
-                const profileResult = await getUserProfile(userId);
-                if (!profileResult || !profileResult.success) {
-                    console.warn("Failed to get user profile in startQuestTracking");
-                    return;
-                }
-                
-                const profile = profileResult.data;
-                if (!profile || typeof profile !== 'object') {
-                    console.warn("Invalid profile data in startQuestTracking");
-                    return;
-                }
-                
-                const questStartTimes = profile.questStartTimes || {};
-                if (typeof questStartTimes !== 'object') {
-                    questStartTimes = {};
-                }
-                
-                questStartTimes[questId] = new Date().toISOString();
-                
-                await updateUserProfile(userId, {
-                    questStartTimes: questStartTimes
-                });
-            } catch (error) {
-                console.error("Error starting quest tracking:", error);
-                // Continue silently in case of error - quest tracking is not critical
-            }
-        }
+        // Quest start tracking removed - no verification required
 
         function getRandomQuests(quests, completedQuestIds, allQuestsCompleted = false, count = 5) {
             if (allQuestsCompleted) {
@@ -883,9 +791,8 @@
                     
                     const currentQuestCompletionCount = profile.questCompletionCount || {};
                     const allQuestsCompleted = profile.allQuestsCompleted || false;
-                    const questStartTimes = profile.questStartTimes || {};
                     
-                    // Advanced time and behavior analysis
+                    // Check only daily limit (5 quests per day) - no other verification required
                     const selectedQuestIds = [];
                     checkboxes.forEach(checkbox => {
                         if (!checkbox) return;
@@ -898,9 +805,8 @@
                         }
                     });
                     
-                    // Check only daily limit (5 quests per day) - no other verification required
                     if (selectedQuestIds.length > 0) {
-                        const warnings = await detectAbnormalPattern(profile, selectedQuestIds, questStartTimes);
+                        const warnings = await detectAbnormalPattern(profile, selectedQuestIds, {});
                         
                         if (!Array.isArray(warnings)) {
                             console.error("detectAbnormalPattern returned invalid result");
@@ -1060,16 +966,7 @@
                         : [];
                     dailyCompletions[today] = [...new Set([...todayCompletions, ...uniqueCompletedQuestIds])];
                     
-                    // Clear start times of completed quests
-                    const updatedQuestStartTimes = { ...questStartTimes };
-                    if (typeof updatedQuestStartTimes !== 'object') {
-                        updatedQuestStartTimes = {};
-                    }
-                    uniqueCompletedQuestIds.forEach(questId => {
-                        if (questId && typeof questId === 'string') {
-                            delete updatedQuestStartTimes[questId];
-                        }
-                    });
+                    // Quest start times tracking removed - no verification required
                     
                     const updateResult = await updateUserProfile(currentUser.uid, {
                         xp: newXP,
@@ -1082,8 +979,7 @@
                         allQuestsCompleted: shouldMarkAllCompleted || allQuestsCompleted,
                         allQuestsCompletedCount: newAllQuestsCompletedCount,
                         lastQuestCompletionTime: new Date().toISOString(),
-                        dailyQuestCompletions: dailyCompletions,
-                        questStartTimes: updatedQuestStartTimes
+                        dailyQuestCompletions: dailyCompletions
                     });
                     
                     if (updateResult.success) {
