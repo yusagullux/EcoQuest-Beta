@@ -1,13 +1,5 @@
-// ============================================
-// ECOQUEST PROFILE - MAIN LOGIC
-// ============================================
-
 import { requireAuth } from "./auth-guard.js";
 import { logOut, getUserProfile, getAllUsers, updateUserProfile } from "./auth.js";
-
-// ============================================
-// STATE MANAGEMENT
-// ============================================
 
 const DEFAULT_FILTER = "all";
 const DEFAULT_LEVEL = 1;
@@ -19,9 +11,6 @@ let userCollection = [];
 let currentFilter = DEFAULT_FILTER;
 let allUsers = [];
 
-// ============================================
-// BADGE SYSTEM (from dashboard)
-// ============================================
 
 function getBadgeImageForLevel(level) {
     const badgeImages = {
@@ -48,9 +37,6 @@ function calculateLevel(xp) {
     return DEFAULT_LEVEL;
 }
 
-// ============================================
-// RANKING FUNCTIONS
-// ============================================
 
 async function calculateRanking(userId) {
     try {
@@ -65,13 +51,12 @@ async function calculateRanking(userId) {
         const userIndex = users.findIndex(u => u.id === userId);
         const currentRank = userIndex >= 0 ? userIndex + 1 : null;
         
-        // Get user's best rank from profile or use current rank
-        const userProfile = users.find(u => u.id === userId);
-        const bestRank = userProfile?.bestRank || currentRank;
+        const profileResult = await getUserProfile(userId);
+        const bestRank = profileResult.success ? (profileResult.data.bestRank || null) : null;
 
         return { 
             current: currentRank, 
-            best: bestRank || currentRank 
+            best: bestRank 
         };
     } catch (error) {
         console.error("Error calculating ranking:", error);
@@ -81,14 +66,19 @@ async function calculateRanking(userId) {
 
 async function updateBestRank(userId, currentRank) {
     try {
+        if (!currentRank || currentRank <= 0) {
+            return;
+        }
+
         const profileResult = await getUserProfile(userId);
         if (!profileResult.success) return;
 
         const profile = profileResult.data;
-        const bestRank = profile.bestRank || currentRank;
+        const bestRank = profile.bestRank;
 
-        // Update if current rank is better (lower number = better rank)
-        if (currentRank > 0 && (!bestRank || currentRank < bestRank)) {
+        if (bestRank === null || bestRank === undefined) {
+            await updateUserProfile(userId, { bestRank: currentRank });
+        } else if (currentRank < bestRank) {
             await updateUserProfile(userId, { bestRank: currentRank });
         }
     } catch (error) {
@@ -96,9 +86,6 @@ async function updateBestRank(userId, currentRank) {
     }
 }
 
-// ============================================
-// UI FUNCTIONS
-// ============================================
 
 function showError(message) {
     const errorState = document.getElementById("errorState");
@@ -216,9 +203,6 @@ function filterCollection(rarity) {
     renderCollection(filteredPlants);
 }
 
-// ============================================
-// CARBON REDUCTION CALCULATION
-// ============================================
 
 async function loadQuestsData() {
     try {
@@ -234,7 +218,6 @@ async function loadQuestsData() {
 }
 
 function mapCompletedQuestIds(completedQuestIds) {
-    // Quest ID mapping from dashboard
     const QUEST_ID_MAPPING = {
         "1": { jsonIds: ["recycling_1", "cleanup_1"] },
         "2": { jsonIds: ["energy_1"] },
@@ -300,9 +283,6 @@ async function calculateTotalCarbonReduction(completedQuestIds) {
     }
 }
 
-// ============================================
-// DATA LOADING
-// ============================================
 
 async function loadProfileData() {
     try {
@@ -325,7 +305,6 @@ async function loadProfileData() {
         const allQuestsCompleted = profile.allQuestsCompleted || false;
         userCollection = profile.plants || [];
 
-        // Update UI
         const profileName = document.getElementById("profileName");
         const profileEmail = document.getElementById("profileEmail");
         const profileBadge = document.getElementById("profileBadge");
@@ -346,14 +325,12 @@ async function loadProfileData() {
         if (missionsCompletedEl) missionsCompletedEl.textContent = missionsCompleted;
         if (totalPlantsEl) totalPlantsEl.textContent = userCollection.length;
         
-        // Calculate and display total carbon reduction
         const completedQuests = profile.completedQuests || [];
         const totalCarbon = await calculateTotalCarbonReduction(completedQuests);
         if (totalCarbonReducedEl) {
             totalCarbonReducedEl.textContent = totalCarbon.toFixed(1);
         }
         
-        // Show replay mode card if all quests are completed
         if (replayModeCard && replayModeCount) {
             if (allQuestsCompleted && allQuestsCompletedCount > 0) {
                 replayModeCard.style.display = "flex";
@@ -363,7 +340,6 @@ async function loadProfileData() {
             }
         }
 
-        // Calculate and display ranking
         const ranking = await calculateRanking(profileUserId);
         const currentRankEl = document.getElementById("currentRank");
         const bestRankEl = document.getElementById("bestRank");
@@ -371,19 +347,29 @@ async function loadProfileData() {
         if (currentRankEl) {
             currentRankEl.textContent = ranking.current ? `#${ranking.current}` : "-";
         }
-        if (bestRankEl) {
-            bestRankEl.textContent = ranking.best ? `#${ranking.best}` : "-";
-        }
-
-        // Update best rank if needed (only for own profile)
+        
+        let bestRankFromProfile = profile.bestRank;
+        
         if (profileUserId === currentUser.uid && ranking.current) {
             await updateBestRank(profileUserId, ranking.current);
+            const updatedProfileResult = await getUserProfile(profileUserId);
+            if (updatedProfileResult.success) {
+                bestRankFromProfile = updatedProfileResult.data.bestRank;
+            }
+        }
+        
+        if (bestRankEl) {
+            if (bestRankFromProfile !== null && bestRankFromProfile !== undefined && bestRankFromProfile > 0) {
+                bestRankEl.textContent = `#${bestRankFromProfile}`;
+            } else if (ranking.current && profileUserId === currentUser.uid) {
+                bestRankEl.textContent = `#${ranking.current}`;
+            } else {
+                bestRankEl.textContent = "-";
+            }
         }
 
-        // Render collection
         filterCollection(currentFilter);
 
-        // Show content
         const loadingState = document.getElementById("loadingState");
         const profileContent = document.getElementById("profileContent");
         if (loadingState) loadingState.style.display = "none";
@@ -396,19 +382,14 @@ async function loadProfileData() {
     }
 }
 
-// ============================================
-// INITIALIZATION
-// ============================================
 
 function initializeProfile() {
-    // Filter buttons
     document.querySelectorAll(".filter-btn").forEach(btn => {
         btn.addEventListener("click", () => {
             filterCollection(btn.dataset.rarity);
         });
     });
 
-    // Logout buttons (only show if viewing own profile)
     if (profileUserId === currentUser.uid) {
         const logoutButton = document.getElementById("logoutButton");
         const logoutButtonMobile = document.getElementById("logoutButtonMobile");
@@ -431,7 +412,6 @@ function initializeProfile() {
             });
         }
 
-        // Mobile menu toggle
         const mobileMenuToggle = document.getElementById("mobileMenuToggle");
         const mobileMenu = document.getElementById("mobileMenu");
 
@@ -460,27 +440,22 @@ function initializeProfile() {
             });
         }
     } else {
-        // For public profiles, hide logout buttons but keep navigation visible
         const logoutButton = document.getElementById("logoutButton");
         const logoutButtonMobile = document.getElementById("logoutButtonMobile");
         const mobileMenu = document.getElementById("mobileMenu");
 
-        // Hide logout buttons
         if (logoutButton) logoutButton.style.display = "none";
         if (logoutButtonMobile) logoutButtonMobile.style.display = "none";
         
-        // Remove logout button from mobile menu
         if (mobileMenu) {
             const logoutLi = mobileMenu.querySelector("li:has(.logout-button-mobile)");
             if (logoutLi) logoutLi.remove();
         }
 
-        // Add back button to header for public profiles
         const header = document.querySelector("header");
         if (header) {
             const nav = header.querySelector("nav");
             if (nav) {
-                // Check if back button already exists
                 let backButton = nav.querySelector(".back-button");
                 if (!backButton) {
                     backButton = document.createElement("button");
@@ -497,7 +472,6 @@ function initializeProfile() {
                         backButton.style.background = "var(--color-primary)";
                     });
                     
-                    // Insert after logo, before mobile menu toggle
                     const logo = nav.querySelector("img");
                     const mobileToggle = nav.querySelector("#mobileMenuToggle");
                     if (logo && mobileToggle) {
@@ -513,14 +487,10 @@ function initializeProfile() {
     }
 }
 
-// ============================================
-// MAIN ENTRY POINT
-// ============================================
 
 requireAuth().then(async (user) => {
     currentUser = user;
     
-    // Get user ID from URL parameter (for public profiles)
     const urlParams = new URLSearchParams(window.location.search);
     profileUserId = urlParams.get("userId") || user.uid;
 

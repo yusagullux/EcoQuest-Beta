@@ -114,11 +114,46 @@
         </div>
     </main>
 
+    <!-- Photo Upload Modal -->
+    <div id="photoUploadModal" class="photo-modal" style="display: none;">
+        <div class="photo-modal-content">
+            <div class="photo-modal-header">
+                <h3>📸 Take Quest Proof Photo</h3>
+                <button class="photo-modal-close" id="photoModalClose">&times;</button>
+            </div>
+            <div class="photo-modal-body">
+                <p class="photo-instruction" id="photoInstruction">Please take a photo as proof that you completed this quest. The photo will not be stored.</p>
+                <div class="photo-upload-area" id="photoUploadArea">
+                    <input type="file" id="photoInput" accept="image/*" capture="environment" style="display: none;">
+                    <label for="photoInput" class="photo-upload-label">
+                        <span class="photo-upload-icon">📷</span>
+                        <span class="photo-upload-text">Click to take a photo</span>
+                    </label>
+                    <div id="photoLoadingIndicator" class="photo-loading-indicator" style="display: none;">
+                        <div class="photo-spinner"></div>
+                        <p>Processing image...</p>
+                    </div>
+                    <div id="photoPreview" class="photo-preview" style="display: none;">
+                        <img id="photoPreviewImg" src="" alt="Preview">
+                        <button type="button" id="photoRemoveBtn" class="photo-remove-btn">Remove</button>
+                    </div>
+                </div>
+                <div class="photo-modal-actions">
+                    <button id="photoCancelBtn" class="photo-btn photo-btn-cancel">Cancel</button>
+                    <button id="photoUploadBtn" class="photo-btn photo-btn-upload" disabled>Verify & Continue</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
     <script type="module">
         import { requireAuth } from "../js/auth-guard.js";
-        import { logOut, getUserProfile, updateUserProfile } from "../js/auth.js";
+        import { logOut, getUserProfile, updateUserProfile, getAllUsers } from "../js/auth.js";
+        import { getErrorMessage } from "../js/utils.js";
+        import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { db } from "../js/firebase-config.js";
         function getBadgeImageForLevel(level) {
             const badgeImages = {
                 1: "../images/ecoquests-badges/cat-badge-removedbg.png",
@@ -136,15 +171,15 @@
 
         function getBadgeNameForLevel(level) {
             const badgeNames = {
-                1: "Cat",      // 0 XP
-                2: "Fox",      // 100 XP
-                3: "Rabbit",   // 250 XP
-                4: "Deer",     // 500 XP
-                5: "Wolf",     // 1,000 XP
-                6: "Bear",     // 2,500 XP
-                7: "Eagle",    // 5,000 XP
-                8: "Tiger",    // 10,000 XP
-                9: "Lion"    // 50,000 XP (maximum level)
+                1: "Cat",
+                2: "Fox",
+                3: "Rabbit",
+                4: "Deer",
+                5: "Wolf",
+                6: "Bear",
+                7: "Eagle",
+                8: "Tiger",
+                9: "Lion"
             };
             return badgeNames[level] || badgeNames[1];
         }
@@ -153,9 +188,7 @@
             const badgeImage = getBadgeImageForLevel(level);
             const badgeName = getBadgeNameForLevel(level);
             
-            // Remove any existing animation class first
             badgeElement.classList.remove('badge-unlock');
-            
             badgeElement.innerHTML = '';
             
             const img = document.createElement('img');
@@ -168,13 +201,8 @@
             badgeElement.title = `${badgeName} Badge`;
             
             if (animate) {
-                // Force reflow to ensure the element is rendered
                 void badgeElement.offsetWidth;
-                
-                // Add animation class
                 badgeElement.classList.add('badge-unlock');
-                
-                // Remove animation class after animation completes
                 setTimeout(() => {
                     badgeElement.classList.remove('badge-unlock');
                 }, 2000);
@@ -188,10 +216,9 @@
             const badgeNameElement = document.getElementById("badgeName");
             
             if (showcaseElement) {
-                // Remove any existing animation class first
                 showcaseElement.classList.remove('badge-showcase-unlock');
-                
                 showcaseElement.innerHTML = '';
+                
                 const img = document.createElement('img');
                 img.src = badgeImage;
                 img.alt = `${badgeName} Badge`;
@@ -199,13 +226,8 @@
                 showcaseElement.appendChild(img);
                 
                 if (animate) {
-                    // Force reflow to ensure the element is rendered
                     void showcaseElement.offsetWidth;
-                    
-                    // Add animation class
                     showcaseElement.classList.add('badge-showcase-unlock');
-                    
-                    // Remove animation class after animation completes
                     setTimeout(() => {
                         showcaseElement.classList.remove('badge-showcase-unlock');
                     }, 2500);
@@ -230,13 +252,10 @@
                     displayBadge(badgeElement, newLevel, true);
                 }
                 
-                // First show the badge without animation
                 displayBadgeShowcase(newLevel, false);
                 
-                // Small delay to ensure badge is visible, then animate
                 requestAnimationFrame(() => {
                     requestAnimationFrame(() => {
-                        // Scroll to badge showcase if it's not fully visible
                         const badgeShowcaseCard = document.querySelector('.badge-showcase-card');
                         if (badgeShowcaseCard) {
                             const rect = badgeShowcaseCard.getBoundingClientRect();
@@ -247,13 +266,10 @@
                                     behavior: 'smooth', 
                                     block: 'center' 
                                 });
-                                
-                                // Wait for scroll, then animate
                                 setTimeout(() => {
                                     displayBadgeShowcase(newLevel, true);
                                 }, 500);
                             } else {
-                                // Already visible, animate immediately
                                 setTimeout(() => {
                                     displayBadgeShowcase(newLevel, true);
                                 }, 300);
@@ -500,9 +516,522 @@
             return Math.min(bonus, 3.0);
         }
 
-        // Time-based verification removed - users can complete quests immediately
+        let pendingQuestCompletion = null;
+        let currentQuestIndex = 0;
+        let verifiedPhotos = {};
+        
+        const QUESTS_WITHOUT_PHOTO = [
+            'water_1',      // Turn Off Water While Brushing (bathroom, private)
+            'water_2',      // Reduce Shower Time by 2 Minutes (shower, private)
+            'energy_5',     // Turn Off Electronics at Night (night activity, private)
+            'energy_3',     // Charge Phone Only When Needed (personal device, private)
+            'sustainable_4' // Unplug Unused Chargers (personal devices, private)
+        ];
+        let cachedQuestsDataForPhoto = null;
+        
+        async function questRequiresPhoto(questId) {
+            const mappedQuest = QUEST_ID_MAPPING[questId];
+            const jsonQuestIds = mappedQuest?.jsonIds || [];
+            
+            for (const jsonId of jsonQuestIds) {
+                if (QUESTS_WITHOUT_PHOTO.includes(jsonId)) {
+                    return false;
+                }
+            }
+            
+            if (!cachedQuestsDataForPhoto) {
+                cachedQuestsDataForPhoto = await loadQuestsData();
+            }
+            
+            if (cachedQuestsDataForPhoto && cachedQuestsDataForPhoto.categories) {
+                for (const jsonId of jsonQuestIds) {
+                    for (const category of cachedQuestsDataForPhoto.categories) {
+                        const quest = category.quests?.find(q => q.id === jsonId);
+                        if (quest) {
+                            if (quest.hasOwnProperty('requiresPhoto')) {
+                                return quest.requiresPhoto === true;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            return true;
+        }
+        
+        let lastQuestCompletionTime = 0;
+        const MIN_QUEST_COMPLETION_INTERVAL = 1000;
+        async function calculateAndUpdateBestRank(userId) {
+            try {
+                const result = await getAllUsers();
+                if (!result.success) {
+                    return;
+                }
 
-        async function detectAbnormalPattern(profile, questIds, questStartTimes) {
+                const users = result.data || [];
+                users.sort((a, b) => (b.xp || 0) - (a.xp || 0));
+
+                const userIndex = users.findIndex(u => u.id === userId);
+                const currentRank = userIndex >= 0 ? userIndex + 1 : null;
+
+                if (!currentRank || currentRank <= 0) {
+                    return;
+                }
+
+                // Get current best rank from profile
+                const profileResult = await getUserProfile(userId);
+                if (!profileResult.success) {
+                    return;
+                }
+
+                const profile = profileResult.data;
+                const bestRank = profile.bestRank;
+
+                if (bestRank === null || bestRank === undefined) {
+                    await updateUserProfile(userId, { bestRank: currentRank });
+                } else if (currentRank < bestRank) {
+                    await updateUserProfile(userId, { bestRank: currentRank });
+                }
+            } catch (error) {
+                console.error("Error calculating/updating best rank:", error);
+            }
+        }
+        
+        function showSuccessAnimation(message, duration = 3000) {
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success-animation';
+            successDiv.innerHTML = `
+                <div class="success-animation-icon">✅</div>
+                <h3>Success!</h3>
+                <p>${message}</p>
+            `;
+            document.body.appendChild(successDiv);
+            
+            setTimeout(() => {
+                successDiv.style.animation = 'successFadeIn 0.3s ease-out reverse';
+                setTimeout(() => {
+                    if (document.body.contains(successDiv)) {
+                        document.body.removeChild(successDiv);
+                    }
+                }, 300);
+            }, duration);
+        }
+        
+        
+        function showPhotoUploadModal(questIds, completionData) {
+            currentQuestIndex = 0;
+            verifiedPhotos = {};
+            pendingQuestCompletion = { questIds, completionData };
+            showQuestPhotoUpload(0);
+        }
+        
+        function showQuestPhotoUpload(index) {
+            if (!pendingQuestCompletion || !pendingQuestCompletion.questIds) {
+                console.error('pendingQuestCompletion is null or invalid');
+                return;
+            }
+            
+            if (index >= pendingQuestCompletion.questIds.length) {
+                completeAllQuestsWithPhotos();
+                return;
+            }
+            
+            const modal = document.getElementById('photoUploadModal');
+            const photoInput = document.getElementById('photoInput');
+            const photoPreview = document.getElementById('photoPreview');
+            const photoPreviewImg = document.getElementById('photoPreviewImg');
+            const photoUploadBtn = document.getElementById('photoUploadBtn');
+            const photoRemoveBtn = document.getElementById('photoRemoveBtn');
+            const photoCancelBtn = document.getElementById('photoCancelBtn');
+            const photoModalClose = document.getElementById('photoModalClose');
+            const photoInstruction = document.querySelector('.photo-instruction');
+            const photoLoadingIndicator = document.getElementById('photoLoadingIndicator');
+            
+            if (!modal || !photoInput || !photoInstruction) {
+                console.error('Required modal elements not found', {
+                    modal: !!modal,
+                    photoInput: !!photoInput,
+                    photoInstruction: !!photoInstruction
+                });
+                return;
+            }
+            
+            currentQuestIndex = index;
+            const questId = pendingQuestCompletion.questIds[index];
+            
+            // Skip if this quest is already verified
+            if (verifiedPhotos[questId]) {
+                showQuestPhotoUpload(index + 1);
+                return;
+            }
+            
+            const quest = pendingQuestCompletion.completionData.quests.find(q => q.id === questId);
+            const questTitle = quest ? quest.title : `Quest ${index + 1}`;
+            
+            if (photoInput) {
+                photoInput.value = '';
+            }
+            if (photoPreview) {
+                photoPreview.style.display = 'none';
+            }
+            if (photoUploadBtn) {
+                photoUploadBtn.disabled = true;
+            }
+            photoInstruction.textContent = `📸 Take a photo as proof for: "${questTitle}"\n(${index + 1} of ${pendingQuestCompletion.questIds.length})\n\nNote: Photo will not be stored, only used for verification.`;
+            
+            if (modal) {
+                modal.style.display = 'flex';
+            }
+            
+            let selectedFile = null;
+            
+            photoInput.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                // Validate file type
+                if (!file.type.startsWith('image/')) {
+                    alert('Please select an image file.');
+                    photoInput.value = '';
+                    return;
+                }
+                
+                // Validate file size (max 10MB)
+                if (file.size > 10 * 1024 * 1024) {
+                    alert('Image is too large. Please select an image smaller than 10MB.');
+                    photoInput.value = '';
+                    return;
+                }
+                
+                try {
+                    if (photoLoadingIndicator) {
+                        photoLoadingIndicator.style.display = 'flex';
+                    }
+                    if (photoPreview) {
+                        photoPreview.style.display = 'none';
+                    }
+                    if (photoUploadBtn) {
+                        photoUploadBtn.disabled = true;
+                    }
+                    
+                    // Just verify that a photo was taken, no compression needed
+                    selectedFile = file;
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        if (photoLoadingIndicator) {
+                            photoLoadingIndicator.style.display = 'none';
+                        }
+                        if (photoPreviewImg) {
+                            photoPreviewImg.src = event.target.result;
+                        }
+                        if (photoPreview) {
+                            photoPreview.style.display = 'block';
+                        }
+                        if (photoUploadBtn) {
+                            photoUploadBtn.disabled = false;
+                        }
+                    };
+                    reader.onerror = () => {
+                        if (photoLoadingIndicator) {
+                            photoLoadingIndicator.style.display = 'none';
+                        }
+                        alert('Failed to load image. Please try another photo.');
+                        photoInput.value = '';
+                        selectedFile = null;
+                    };
+                    reader.readAsDataURL(file);
+                } catch (error) {
+                    if (photoLoadingIndicator) {
+                        photoLoadingIndicator.style.display = 'none';
+                    }
+                    alert('Failed to load image: ' + (error.message || 'Unknown error'));
+                    photoInput.value = '';
+                    selectedFile = null;
+                }
+            };
+            
+            photoRemoveBtn.onclick = () => {
+                if (photoInput) {
+                    photoInput.value = '';
+                }
+                if (photoPreview) {
+                    photoPreview.style.display = 'none';
+                }
+                if (photoUploadBtn) {
+                    photoUploadBtn.disabled = true;
+                }
+                selectedFile = null;
+            };
+            
+            photoUploadBtn.onclick = async () => {
+                if (!selectedFile) {
+                    alert('Please take a photo first.');
+                    return;
+                }
+                // Mark photo as verified (we don't store it)
+                verifiedPhotos[questId] = true;
+                
+                // Close modal temporarily before showing next quest
+                if (modal) {
+                    modal.style.display = 'none';
+                }
+                
+                // Move to next quest
+                setTimeout(() => {
+                    showQuestPhotoUpload(index + 1);
+                }, 100);
+            };
+            
+            const closeModal = () => {
+                const completionData = pendingQuestCompletion?.completionData;
+                if (modal) {
+                    modal.style.display = 'none';
+                }
+                pendingQuestCompletion = null;
+                currentQuestIndex = 0;
+                verifiedPhotos = {};
+                if (completionData?.completeButton) {
+                    completionData.completeButton.disabled = false;
+                    completionData.completeButton.textContent = "Complete Selected Missions";
+                }
+            };
+            
+            photoCancelBtn.onclick = closeModal;
+            photoModalClose.onclick = closeModal;
+            modal.onclick = (e) => { if (e.target === modal) closeModal(); };
+        }
+        
+        
+        async function completeAllQuestsWithPhotos() {
+            const modal = document.getElementById('photoUploadModal');
+            const completionData = pendingQuestCompletion?.completionData;
+            const questIds = pendingQuestCompletion?.questIds || [];
+            
+            if (modal) {
+                modal.style.display = 'none';
+            }
+            
+            
+            if (!completionData || questIds.length === 0) {
+                console.error('Missing completion data or quest IDs');
+                alert('Error: Missing quest completion data. Please try again.');
+                if (completionData?.completeButton) {
+                    completionData.completeButton.disabled = false;
+                    completionData.completeButton.textContent = "Complete Selected Missions";
+                }
+                pendingQuestCompletion = null;
+                verifiedPhotos = {};
+                return;
+            }
+            
+            try {
+                await completeQuestsWithPhoto(questIds, completionData, verifiedPhotos);
+            } catch (error) {
+                console.error('Error in completeAllQuestsWithPhotos:', error);
+                const errorMessage = getErrorMessage(error);
+                alert(`Unable to complete quests:\n\n${errorMessage}`);
+            } finally {
+                pendingQuestCompletion = null;
+                verifiedPhotos = {};
+            }
+        }
+        
+        async function completeQuestsWithPhoto(questIds, completionData, questPhotoMap) {
+            const { currentUser, profile, quests, checkboxes } = completionData;
+            
+            try {
+                const currentQuestCompletionCount = profile.questCompletionCount || {};
+                const allQuestsCompleted = profile.allQuestsCompleted || false;
+                
+                let totalXP = 0;
+                const completedQuestIdsToAdd = [];
+                
+                for (const questId of questIds) {
+                    const quest = quests.find(q => q.id === questId);
+                    if (!quest) {
+                        continue;
+                    }
+                    
+                    const requiresPhoto = await questRequiresPhoto(questId);
+                    
+                    if (requiresPhoto && !questPhotoMap[questId]) {
+                        continue;
+                    }
+                    
+                    const baseXP = Number(quest.xp) || 0;
+                    if (baseXP < 0) continue;
+                    
+                    const completionCount = Number(currentQuestCompletionCount[questId]) || 0;
+                    const bonusMultiplier = getQuestBonusMultiplier(completionCount);
+                    const bonusXP = Math.floor(baseXP * bonusMultiplier);
+                    
+                    if (isNaN(bonusXP) || bonusXP < 0) continue;
+                    
+                    totalXP += bonusXP;
+                    completedQuestIdsToAdd.push(questId);
+                    currentQuestCompletionCount[questId] = completionCount + 1;
+                }
+                
+                if (completedQuestIdsToAdd.length === 0) {
+                    console.error("No valid quests to complete", {
+                        questIds: questIds,
+                        questPhotoMap: questPhotoMap,
+                        verifiedQuests: Object.keys(questPhotoMap),
+                        questsAvailable: quests.map(q => q.id)
+                    });
+                    throw new Error("No valid quests to complete. Please make sure you took photos for all selected quests.");
+                }
+                
+                const uniqueCompletedQuestIds = [...new Set(completedQuestIdsToAdd)];
+                
+                // Calculate XP, level, eco points
+                const currentXP = profile.xp || 0;
+                const currentEcoPoints = profile.ecoPoints || 0;
+                const currentMissions = profile.missionsCompleted || 0;
+                const currentLevel = profile.level || calculateLevel(currentXP);
+                const currentCompletedQuests = profile.completedQuests || [];
+                const dailyQuestsCompleted = profile.dailyQuestsCompleted || [];
+                const badgesCount = (profile.badges || []).length;
+                
+                const newXP = currentXP + totalXP;
+                const newLevel = calculateLevel(newXP);
+                
+                const expectedEcoPointsAtNewLevel = calculateEcoPoints(newXP, newLevel, badgesCount);
+                const expectedEcoPointsAtCurrentLevel = calculateEcoPoints(currentXP, currentLevel, badgesCount);
+                
+                let earnedEcoPoints = expectedEcoPointsAtNewLevel - expectedEcoPointsAtCurrentLevel;
+                
+                let bonusEcoPoints = 0;
+                if (allQuestsCompleted) {
+                    uniqueCompletedQuestIds.forEach(questId => {
+                        const completionCount = currentQuestCompletionCount[questId] || 0;
+                        if (completionCount > 0) {
+                            const questBonus = Math.min(completionCount * 0.1, 0.5);
+                            const quest = quests.find(q => q.id === questId);
+                            const questBaseEcoPoints = (quest?.xp || 0) * 0.1;
+                            bonusEcoPoints += Math.floor(questBaseEcoPoints * questBonus);
+                        }
+                    });
+                }
+                
+                const newEcoPoints = currentEcoPoints + earnedEcoPoints + bonusEcoPoints;
+                const newMissions = currentMissions + uniqueCompletedQuestIds.length;
+                const updatedCompletedQuests = Array.isArray(currentCompletedQuests) 
+                    ? [...new Set([...currentCompletedQuests, ...uniqueCompletedQuestIds])]
+                    : uniqueCompletedQuestIds;
+                const updatedDailyCompleted = Array.isArray(dailyQuestsCompleted)
+                    ? [...new Set([...dailyQuestsCompleted, ...uniqueCompletedQuestIds])]
+                    : uniqueCompletedQuestIds;
+                
+                const allQuestsCheck = await checkAllQuestsCompleted(updatedCompletedQuests);
+                const shouldMarkAllCompleted = allQuestsCheck.allCompleted && !allQuestsCompleted;
+                
+                const currentAllQuestsCompletedCount = profile.allQuestsCompletedCount || 0;
+                let newAllQuestsCompletedCount = currentAllQuestsCompletedCount;
+                
+                const allDailyQuestsCompleted = updatedDailyCompleted.length >= quests.length && quests.length > 0;
+                const previousAllDailyQuestsCompleted = dailyQuestsCompleted.length >= quests.length && quests.length > 0;
+                
+                if (allQuestsCompleted && allDailyQuestsCompleted && !previousAllDailyQuestsCompleted) {
+                    newAllQuestsCompletedCount = currentAllQuestsCompletedCount + 1;
+                }
+                
+                if (shouldMarkAllCompleted) {
+                    newAllQuestsCompletedCount = 1;
+                }
+                
+                const today = getTodayDateString();
+                let dailyCompletions = profile.dailyQuestCompletions || {};
+                if (typeof dailyCompletions !== 'object') {
+                    dailyCompletions = {};
+                }
+                const todayCompletions = Array.isArray(dailyCompletions[today]) 
+                    ? [...new Set(dailyCompletions[today])] 
+                    : [];
+                dailyCompletions[today] = [...new Set([...todayCompletions, ...uniqueCompletedQuestIds])];
+                
+                const updateResult = await updateUserProfile(currentUser.uid, {
+                    xp: newXP,
+                    ecoPoints: newEcoPoints,
+                    missionsCompleted: newMissions,
+                    level: newLevel,
+                    completedQuests: updatedCompletedQuests,
+                    dailyQuestsCompleted: updatedDailyCompleted,
+                    questCompletionCount: currentQuestCompletionCount,
+                    allQuestsCompleted: shouldMarkAllCompleted || allQuestsCompleted,
+                    allQuestsCompletedCount: newAllQuestsCompletedCount,
+                    lastQuestCompletionTime: new Date().toISOString(),
+                    dailyQuestCompletions: dailyCompletions
+                });
+                
+                if (updateResult.success) {
+                    const progress = getXPProgress(newXP, newLevel);
+                    const ecoPointsEarned = newEcoPoints - currentEcoPoints;
+                    const levelUp = newLevel > currentLevel;
+                    
+                    await updateUI(newXP, newLevel, newMissions, newEcoPoints, currentUser, currentLevel, updatedCompletedQuests);
+                    await updateQuestCharts(updatedCompletedQuests);
+                    
+                    await calculateAndUpdateBestRank(currentUser.uid);
+                    
+                    const bonusInfo = allQuestsCompleted && uniqueCompletedQuestIds.some(id => {
+                        const count = currentQuestCompletionCount[id] || 0;
+                        return count > 0;
+                    }) ? " (with bonus)" : "";
+                    
+                    let successMessage = `Completed ${uniqueCompletedQuestIds.length} mission(s)!`;
+                    successMessage += `\n✨ +${totalXP} XP${bonusInfo}`;
+                    successMessage += `\n💰 +${ecoPointsEarned} EcoPoints`;
+                    
+                    if (levelUp) {
+                        successMessage += `\n🎉 ${getBadgeNameForLevel(newLevel)} Badge Unlocked!`;
+                    }
+                    
+                    showSuccessAnimation(successMessage, 4000);
+                    
+                    setTimeout(() => {
+                        let alertMessage = `Great job! You completed ${uniqueCompletedQuestIds.length} mission(s)!\n\n`;
+                        alertMessage += `✨ Earned: ${totalXP} XP${bonusInfo}\n`;
+                        alertMessage += `💰 Earned: ${ecoPointsEarned} EcoPoints\n`;
+                        alertMessage += `📸 Photo proof verified!\n\n`;
+                        alertMessage += `Level ${newLevel} - ${progress.current} / ${progress.required} XP to next level`;
+                        
+                        if (levelUp) {
+                            alertMessage += `\n\n🎉 New Badge Unlocked: ${getBadgeNameForLevel(newLevel)} Badge!`;
+                        }
+                        
+                        if (!allQuestsCheck.allCompleted && allQuestsCheck.totalQuests > 0) {
+                            alertMessage += `\n\n📊 Quest Progress: ${allQuestsCheck.completedCount} / ${allQuestsCheck.totalQuests} quests completed`;
+                        } else if (allQuestsCompleted) {
+                            alertMessage += `\n\n🔄 Replay Mode: Repeat quests to earn even more rewards!`;
+                        }
+                        
+                        alert(alertMessage);
+                    }, 1000);
+                    
+                    await renderQuests(quests, currentUser, updatedCompletedQuests, updatedDailyCompleted);
+                    
+                    if (completionData.completeButton) {
+                        completionData.completeButton.disabled = false;
+                        completionData.completeButton.textContent = "Complete Selected Missions";
+                    }
+                    lastQuestCompletionTime = Date.now();
+                } else {
+                    const errorMsg = getErrorMessage(updateResult.error);
+                    throw new Error(`Failed to update profile: ${errorMsg}`);
+                }
+            } catch (error) {
+                console.error("Error completing quests with photo:", error);
+                const errorMessage = getErrorMessage(error);
+                alert(`Unable to complete quests:\n\n${errorMessage}\n\nPlease try again or contact support if the problem persists.`);
+                if (completionData.completeButton) {
+                    completionData.completeButton.disabled = false;
+                    completionData.completeButton.textContent = "Complete Selected Missions";
+                }
+            }
+        }
+
+        async function detectAbnormalPattern(profile, questIds) {
             try {
                 if (!profile || typeof profile !== 'object') {
                     return [];
@@ -538,7 +1067,6 @@
             }
         }
 
-        // Quest start tracking removed - no verification required
 
         function getRandomQuests(quests, completedQuestIds, allQuestsCompleted = false, count = 5) {
             if (allQuestsCompleted) {
@@ -763,9 +1291,16 @@
             completeButton.disabled = false;
             
             completeButton.addEventListener("click", async () => {
-                // Güvenlik kontrolleri
+                // Security checks
                 if (!currentUser || !currentUser.uid) {
                     alert("User information not found. Please refresh the page.");
+                    return;
+                }
+                
+                // Rate limiting check
+                const now = Date.now();
+                if (now - lastQuestCompletionTime < MIN_QUEST_COMPLETION_INTERVAL) {
+                    alert("Please wait a moment before completing more quests.");
                     return;
                 }
                 
@@ -775,8 +1310,15 @@
                     return;
                 }
                 
+                // Validate quest selection count
+                if (checkboxes.length > 10) {
+                    alert("You can only complete up to 10 quests at once.");
+                    return;
+                }
+                
                 completeButton.disabled = true;
                 completeButton.textContent = "Processing...";
+                lastQuestCompletionTime = now;
                 
                 try {
                     const profileResult = await getUserProfile(currentUser.uid);
@@ -789,312 +1331,82 @@
                         throw new Error("Invalid profile data");
                     }
                     
-                    const currentQuestCompletionCount = profile.questCompletionCount || {};
-                    const allQuestsCompleted = profile.allQuestsCompleted || false;
-                    
                     // Check only daily limit (5 quests per day) - no other verification required
                     const selectedQuestIds = [];
                     checkboxes.forEach(checkbox => {
                         if (!checkbox) return;
                         const missionItem = checkbox.closest('.mission-item');
                         if (missionItem) {
-                            const questId = missionItem.dataset.questId;
+                        const questId = missionItem.dataset.questId;
                             if (questId && typeof questId === 'string') {
                                 selectedQuestIds.push(questId);
                             }
                         }
                     });
                     
-                    if (selectedQuestIds.length > 0) {
-                        const warnings = await detectAbnormalPattern(profile, selectedQuestIds, {});
+                    const uniqueQuestIds = [...new Set(selectedQuestIds)];
+                    
+                    if (uniqueQuestIds.length > 0) {
+                        const warnings = await detectAbnormalPattern(profile, uniqueQuestIds);
                         
                         if (!Array.isArray(warnings)) {
                             console.error("detectAbnormalPattern returned invalid result");
-                            warnings = [];
                         }
                         
                         // Stop quest if daily limit exceeded
                         const dailyLimitWarnings = warnings.filter(w => 
                             w && w.type && w.type === "daily_limit"
                         );
-                        
+                    
                         if (dailyLimitWarnings.length > 0) {
-                            completeButton.disabled = false;
-                            completeButton.textContent = "Complete Selected Missions";
-                            const errorMessages = dailyLimitWarnings.map(w => w.message || "Daily limit exceeded").join('\n\n');
-                            alert(`⚠️ Daily Quest Limit\n\n${errorMessages}`);
-                            return;
-                        }
-                    }
-                    
-                    let totalXP = 0;
-                    const completedQuestIdsToAdd = [];
-                    
-                    if (!Array.isArray(quests) || quests.length === 0) {
-                        throw new Error("Failed to load quest list. Please refresh the page.");
-                    }
-                    
-                    checkboxes.forEach(checkbox => {
-                        if (!checkbox) return;
-                        
-                        const missionItem = checkbox.closest('.mission-item');
-                        if (!missionItem) return;
-                        
-                        const questIndex = parseInt(missionItem.dataset.questIndex);
-                        const questId = missionItem.dataset.questId;
-                        
-                        if (isNaN(questIndex) || questIndex < 0 || questIndex >= quests.length) {
-                            console.warn(`Invalid quest index: ${questIndex}`);
-                            return;
-                        }
-                        if (!questId || typeof questId !== 'string') {
-                            console.warn('Missing or invalid quest ID');
-                            return;
-                        }
-                        
-                        const quest = quests[questIndex];
-                        if (!quest || typeof quest !== 'object') {
-                            console.warn(`Invalid quest at index ${questIndex}`);
-                            return;
-                        }
-                        
-                        const baseXP = Number(quest.xp) || 0;
-                        if (baseXP < 0) {
-                            console.warn(`Invalid XP value for quest ${questId}`);
-                            return;
-                        }
-                        
-                        const completionCount = Number(currentQuestCompletionCount[questId]) || 0;
-                        const bonusMultiplier = getQuestBonusMultiplier(completionCount);
-                        const bonusXP = Math.floor(baseXP * bonusMultiplier);
-                        
-                        if (isNaN(bonusXP) || bonusXP < 0) {
-                            console.warn(`Invalid bonus XP calculation for quest ${questId}`);
-                            return;
-                        }
-                        
-                        totalXP += bonusXP;
-                        completedQuestIdsToAdd.push(questId);
-                        
-                        currentQuestCompletionCount[questId] = completionCount + 1;
-                        
-                        try {
-                            missionItem.classList.add('completed');
-                            checkbox.disabled = true;
-                        } catch (error) {
-                            console.error("Error updating UI:", error);
-                        }
-                    });
-                    
-                    if (completedQuestIdsToAdd.length === 0) {
                         completeButton.disabled = false;
                         completeButton.textContent = "Complete Selected Missions";
-                        alert("No valid missions selected. Please try again.");
+                            const errorMessages = dailyLimitWarnings.map(w => w.message || "Daily limit exceeded").join('\n\n');
+                            alert(`⚠️ Daily Quest Limit\n\n${errorMessages}`);
                         return;
                     }
+                    }
                     
-                    // Unique quest IDs
-                    const uniqueCompletedQuestIds = [...new Set(completedQuestIdsToAdd)];
+                    // Separate quests that require photo and those that don't
+                    const photoChecks = await Promise.all(
+                        uniqueQuestIds.map(async questId => ({
+                            questId,
+                            requiresPhoto: await questRequiresPhoto(questId)
+                        }))
+                    );
+                    const questsRequiringPhoto = photoChecks.filter(c => c.requiresPhoto).map(c => c.questId);
+                    const questsWithoutPhoto = photoChecks.filter(c => !c.requiresPhoto).map(c => c.questId);
                     
-                    const currentXP = profile.xp || 0;
-                    const currentEcoPoints = profile.ecoPoints || 0;
-                    const currentMissions = profile.missionsCompleted || 0;
-                    const currentLevel = profile.level || calculateLevel(currentXP);
-                    const currentCompletedQuests = profile.completedQuests || [];
-                    const dailyQuestsCompleted = profile.dailyQuestsCompleted || [];
-                    const badgesCount = (profile.badges || []).length;
+                    const completionData = {
+                        currentUser: currentUser,
+                        profile: profile,
+                        quests: quests,
+                        checkboxes: checkboxes,
+                        completeButton: completeButton
+                    };
                     
-                    const newXP = currentXP + totalXP;
-                    const newLevel = calculateLevel(newXP);
-                    
-                    const expectedEcoPointsAtNewLevel = calculateEcoPoints(newXP, newLevel, badgesCount);
-                    const expectedEcoPointsAtCurrentLevel = calculateEcoPoints(currentXP, currentLevel, badgesCount);
-                    
-                    let earnedEcoPoints = expectedEcoPointsAtNewLevel - expectedEcoPointsAtCurrentLevel;
-                    
-                    let bonusEcoPoints = 0;
-                    if (allQuestsCompleted) {
-                        checkboxes.forEach(checkbox => {
-                            const missionItem = checkbox.closest('.mission-item');
-                            const questId = missionItem?.dataset.questId;
-                            if (questId) {
-                                const completionCount = currentQuestCompletionCount[questId] || 0;
-                                if (completionCount > 0) {
-                                    const questBonus = Math.min(completionCount * 0.1, 0.5);
-                                    const questBaseEcoPoints = (quests.find(q => q.id === questId)?.xp || 0) * 0.1;
-                                    bonusEcoPoints += Math.floor(questBaseEcoPoints * questBonus);
-                                }
-                            }
+                    // Complete quests that don't require photo directly
+                    if (questsWithoutPhoto.length > 0) {
+                        // Mark as verified (no photo needed)
+                        questsWithoutPhoto.forEach(questId => {
+                            verifiedPhotos[questId] = true;
                         });
+                        await completeQuestsWithPhoto(questsWithoutPhoto, completionData, verifiedPhotos);
+                        verifiedPhotos = {};
                     }
                     
-                    const newEcoPoints = currentEcoPoints + earnedEcoPoints + bonusEcoPoints;
-                    
-                    const newMissions = currentMissions + uniqueCompletedQuestIds.length;
-                    const updatedCompletedQuests = Array.isArray(currentCompletedQuests) 
-                        ? [...new Set([...currentCompletedQuests, ...uniqueCompletedQuestIds])]
-                        : uniqueCompletedQuestIds;
-                    const updatedDailyCompleted = Array.isArray(dailyQuestsCompleted)
-                        ? [...new Set([...dailyQuestsCompleted, ...uniqueCompletedQuestIds])]
-                        : uniqueCompletedQuestIds;
-                    
-                    const allQuestsCheck = await checkAllQuestsCompleted(updatedCompletedQuests);
-                    const shouldMarkAllCompleted = allQuestsCheck.allCompleted && !allQuestsCompleted;
-                    
-                    const currentAllQuestsCompletedCount = profile.allQuestsCompletedCount || 0;
-                    let newAllQuestsCompletedCount = currentAllQuestsCompletedCount;
-                    
-                    const allDailyQuestsCompleted = updatedDailyCompleted.length >= quests.length && quests.length > 0;
-                    const previousAllDailyQuestsCompleted = dailyQuestsCompleted.length >= quests.length && quests.length > 0;
-                    
-                    if (allQuestsCompleted && allDailyQuestsCompleted && !previousAllDailyQuestsCompleted) {
-                        newAllQuestsCompletedCount = currentAllQuestsCompletedCount + 1;
-                    }
-                    
-                    if (shouldMarkAllCompleted) {
-                        newAllQuestsCompletedCount = 1;
-                    }
-                    
-                    // Update daily completion records (unique quests)
-                    const today = getTodayDateString();
-                    let dailyCompletions = profile.dailyQuestCompletions || {};
-                    if (typeof dailyCompletions !== 'object') {
-                        dailyCompletions = {};
-                    }
-                    const todayCompletions = Array.isArray(dailyCompletions[today]) 
-                        ? [...new Set(dailyCompletions[today])] 
-                        : [];
-                    dailyCompletions[today] = [...new Set([...todayCompletions, ...uniqueCompletedQuestIds])];
-                    
-                    // Quest start times tracking removed - no verification required
-                    
-                    const updateResult = await updateUserProfile(currentUser.uid, {
-                        xp: newXP,
-                        ecoPoints: newEcoPoints,
-                        missionsCompleted: newMissions,
-                        level: newLevel,
-                        completedQuests: updatedCompletedQuests,
-                        dailyQuestsCompleted: updatedDailyCompleted,
-                        questCompletionCount: currentQuestCompletionCount,
-                        allQuestsCompleted: shouldMarkAllCompleted || allQuestsCompleted,
-                        allQuestsCompletedCount: newAllQuestsCompletedCount,
-                        lastQuestCompletionTime: new Date().toISOString(),
-                        dailyQuestCompletions: dailyCompletions
-                    });
-                    
-                    if (updateResult.success) {
-                        const progress = getXPProgress(newXP, newLevel);
-                        const ecoPointsEarned = newEcoPoints - currentEcoPoints;
-                        const levelUp = newLevel > currentLevel;
-                        
-                        await updateUI(newXP, newLevel, newMissions, newEcoPoints, currentUser, currentLevel, updatedCompletedQuests);
-                        
-                        await updateQuestCharts(updatedCompletedQuests);
-                        
-                        const wasAlreadyCompleted = profile.allQuestsCompleted || false;
-                        
-                        if (levelUp) {
-                            // First show the badge without animation
-                            displayBadgeShowcase(newLevel, false);
-                            
-                            // Small delay to ensure badge is visible, then animate
-                            requestAnimationFrame(() => {
-                                requestAnimationFrame(() => {
-                                    // Scroll to badge showcase if it's not fully visible
-                                    const badgeShowcaseCard = document.querySelector('.badge-showcase-card');
-                                    if (badgeShowcaseCard) {
-                                        const rect = badgeShowcaseCard.getBoundingClientRect();
-                                        const isVisible = rect.top >= 0 && rect.bottom <= window.innerHeight;
-                                        
-                                        if (!isVisible) {
-                                            badgeShowcaseCard.scrollIntoView({ 
-                                                behavior: 'smooth', 
-                                                block: 'center' 
-                                            });
-                                            
-                                            // Wait for scroll, then animate
-                                            setTimeout(() => {
-                                                displayBadgeShowcase(newLevel, true);
-                                            }, 500);
-                                        } else {
-                                            // Already visible, animate immediately
-                                            setTimeout(() => {
-                                                displayBadgeShowcase(newLevel, true);
-                                            }, 300);
-                                        }
-                                    } else {
-                                        displayBadgeShowcase(newLevel, true);
-                                    }
-                                });
-                            });
-                        }
-                        
-                        if (allQuestsCheck.allCompleted && !wasAlreadyCompleted) {
-                            setTimeout(async () => {
-                                await showAllQuestsCompletedCelebration(currentUser, 500, 250, {
-                                    currentXP: newXP,
-                                    currentEcoPoints: newEcoPoints,
-                                    currentLevel: newLevel,
-                                    currentBadges: [...new Set([...(profile.badges || []), getBadgeNameForLevel(newLevel)])],
-                                    allQuestsCompletedCount: newAllQuestsCompletedCount
-                                });
-                            }, 1500);
-                        }
-                        
-                        let bonusInfo = '';
-                        if (allQuestsCompleted) {
-                            const totalBaseXP = checkboxes.reduce((sum, checkbox) => {
-                                const missionItem = checkbox.closest('.mission-item');
-                                const questId = missionItem?.dataset.questId;
-                                if (questId) {
-                                    const quest = quests.find(q => q.id === questId);
-                                    return sum + (quest?.xp || 0);
-                                }
-                                return sum;
-                            }, 0);
-                            const bonusXPAmount = totalXP - totalBaseXP;
-                            if (bonusXPAmount > 0) {
-                                bonusInfo = `\n🔄 Repeat Bonus: +${bonusXPAmount} XP`;
-                            }
-                            if (bonusEcoPoints > 0) {
-                                bonusInfo += `\n💰 Repeat Bonus: +${bonusEcoPoints} EcoPoints`;
-                            }
-                        }
-                        
-                        let alertMessage = `Great job! You completed ${checkboxes.length} mission(s)!\n\n`;
-                        alertMessage += `✨ Earned: ${totalXP} XP${bonusInfo}\n`;
-                        alertMessage += `💰 Earned: ${ecoPointsEarned} EcoPoints\n\n`;
-                        alertMessage += `Level ${newLevel} - ${progress.current} / ${progress.required} XP to next level`;
-                        if (levelUp) {
-                            alertMessage += `\n\n🎉 New Badge Unlocked: ${getBadgeNameForLevel(newLevel)} Badge!`;
-                        }
-                        
-                        if (!allQuestsCheck.allCompleted && allQuestsCheck.totalQuests > 0) {
-                            alertMessage += `\n\n📊 Quest Progress: ${allQuestsCheck.completedCount} / ${allQuestsCheck.totalQuests} quests completed`;
-                        } else if (allQuestsCompleted) {
-                            alertMessage += `\n\n🔄 Replay Mode: Repeat quests to earn even more rewards!`;
-                        }
-                        
-                        alert(alertMessage);
-                        
-                        await renderQuests(
-                            quests, 
-                            currentUser, 
-                            updatedCompletedQuests, 
-                            updatedDailyCompleted
-                        );
+                    if (questsRequiringPhoto.length > 0) {
+                        showPhotoUploadModal(questsRequiringPhoto, completionData);
                     } else {
-                        throw new Error("Error updating profile: " + updateResult.error);
+                        if (completeButton) {
+                            completeButton.disabled = false;
+                            completeButton.textContent = "Complete Selected Missions";
+                        }
                     }
                 } catch (error) {
-                    console.error("Error completing missions:", error);
-                    alert("Error: " + error.message);
-                    checkboxes.forEach(checkbox => {
-                        checkbox.checked = false;
-                        const missionItem = checkbox.closest('.mission-item');
-                        missionItem.classList.remove('completed');
-                    });
-                } finally {
+                    console.error("Error in quest completion:", error);
+                    const errorMessage = getErrorMessage(error);
+                    alert(`Unable to complete quests:\n\n${errorMessage}`);
                     completeButton.disabled = false;
                     completeButton.textContent = "Complete Selected Missions";
                 }
@@ -1281,6 +1593,76 @@
                 categoryName: "Gardening & Nature",
                 categoryIcon: "🌱",
                 categoryColor: "#66BB6A"
+            },
+            "26": { 
+                jsonIds: ["recycling_7"], 
+                category: "recycling",
+                categoryName: "Recycling",
+                categoryIcon: "♻️",
+                categoryColor: "#4CAF50"
+            },
+            "27": { 
+                jsonIds: ["recycling_8"], 
+                category: "recycling",
+                categoryName: "Recycling",
+                categoryIcon: "♻️",
+                categoryColor: "#4CAF50"
+            },
+            "28": { 
+                jsonIds: ["energy_8"], 
+                category: "energy_saving",
+                categoryName: "Energy Saving",
+                categoryIcon: "💡",
+                categoryColor: "#FFC107"
+            },
+            "29": { 
+                jsonIds: ["energy_9"], 
+                category: "energy_saving",
+                categoryName: "Energy Saving",
+                categoryIcon: "💡",
+                categoryColor: "#FFC107"
+            },
+            "30": { 
+                jsonIds: ["transportation_4"], 
+                category: "transportation",
+                categoryName: "Transportation",
+                categoryIcon: "🚶",
+                categoryColor: "#2196F3"
+            },
+            "31": { 
+                jsonIds: ["water_3"], 
+                category: "water_saving",
+                categoryName: "Water Saving",
+                categoryIcon: "💧",
+                categoryColor: "#00BCD4"
+            },
+            "32": { 
+                jsonIds: ["cleanup_4"], 
+                category: "cleanup_missions",
+                categoryName: "Clean-Up",
+                categoryIcon: "🧹",
+                categoryColor: "#9C27B0"
+            },
+            "33": { 
+                jsonIds: ["gardening_3"], 
+                category: "gardening",
+                categoryName: "Gardening & Nature",
+                categoryIcon: "🌱",
+                categoryColor: "#66BB6A"
+            },
+            "34": { 
+                jsonIds: ["sustainable_5"], 
+                category: "sustainable_living",
+                categoryName: "Sustainable Living",
+                categoryIcon: "♻️",
+                categoryColor: "#8BC34A"
+            },
+            "35": { 
+                jsonIds: ["sustainable_6"], 
+                category: "sustainable_living",
+                categoryName: "Sustainable Living",
+                categoryIcon: "♻️",
+                categoryColor: "#8BC34A"
             }
         };
 
@@ -1962,7 +2344,6 @@
 
                 const questsData = await loadQuestsData();
                 if (!questsData) {
-                    console.warn("Could not load quests data");
                     const progressList = document.getElementById("categoryProgressList");
                     if (progressList) {
                         progressList.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">Unable to load quest data. Please refresh the page.</p>';
@@ -1972,7 +2353,6 @@
 
                 const categoryStats = calculateQuestProgress(questsData, completedQuestIds || []);
                 if (!categoryStats || categoryStats.length === 0) {
-                    console.warn("No category stats calculated");
                     return;
                 }
 
@@ -1980,7 +2360,6 @@
                 const carbonCtx = document.getElementById("carbonChart");
                 
                 if (!categoryCtx || !carbonCtx) {
-                    console.warn("Chart canvas elements not found, waiting for DOM...");
                     setTimeout(() => updateQuestCharts(completedQuestIds), 200);
                     return;
                 }
@@ -2020,7 +2399,6 @@
             
             if (ecoPointsElement) ecoPointsElement.textContent = ecoPoints || 0;
             
-            // Karbon azaltma değerini güncelle
             if (completedQuests && Array.isArray(completedQuests)) {
                 const totalCarbon = await calculateTotalCarbonReduction(completedQuests);
                 const carbonElement = document.getElementById("totalCarbonReduced");
@@ -2111,38 +2489,126 @@
                             missionListElement.innerHTML = "<p style='color: #999; text-align: center; padding: 20px;'>No missions available. Please check quests.md file.</p>";
                         }
                     } else {
-                        const dailyQuestsData = await loadUserDailyQuests(user, allQuests, completedQuests);
-                        window.currentQuests = dailyQuestsData.quests;
-                        await renderQuests(
-                            dailyQuestsData.quests, 
-                            user, 
-                            completedQuests, 
-                            dailyQuestsData.dailyCompleted || []
-                        );
+                        try {
+                            const dailyQuestsData = await loadUserDailyQuests(user, allQuests, completedQuests);
+                            window.currentQuests = dailyQuestsData.quests;
+                            await renderQuests(
+                                dailyQuestsData.quests, 
+                                user, 
+                                completedQuests, 
+                                dailyQuestsData.dailyCompleted || []
+                            );
+                        } catch (error) {
+                            console.error('Error loading/rendering quests:', error);
+                            if (missionListElement) {
+                                missionListElement.innerHTML = `<p style='color: #d32f2f; text-align: center; padding: 20px;'>Error loading quests: ${error.message}</p>`;
+                            }
+                        }
                     }
                 } else {
-                    const userDisplayNameElement = document.getElementById("userDisplayName");
-                    const userEmailElement = document.getElementById("userEmail");
-                    const missionListElement = document.getElementById("missionList");
+                    const defaultDisplayName = user.email ? user.email.split("@")[0] : "User";
+                    const currentTimestamp = new Date().toISOString();
                     
-                    if (userDisplayNameElement) {
-                        userDisplayNameElement.textContent = user.email ? user.email.split("@")[0] : "User";
-                    }
-                    if (userEmailElement) {
-                        userEmailElement.textContent = user.email || "Unknown";
-                    }
-                    if (missionListElement) {
-                        missionListElement.innerHTML = "<p style='color: #d32f2f; text-align: center; padding: 20px;'>Error loading profile. Please refresh the page.</p>";
+                    try {
+                        // Use setDoc to create new profile (updateDoc only works for existing docs)
+                        await setDoc(doc(db, "users", user.uid), {
+                            email: user.email,
+                            displayName: defaultDisplayName,
+                            xp: 0,
+                            ecoPoints: 0,
+                            level: 1,
+                            badges: [],
+                            missionsCompleted: 0,
+                            completedQuests: [],
+                            lastQuestResetTime: currentTimestamp,
+                            currentDailyQuests: [],
+                            dailyQuestsCompleted: [],
+                            questCompletionCount: {},
+                            dailyQuestCompletions: {},
+                            lastQuestCompletionTime: null,
+                            plants: [],
+                            bestRank: null,
+                            allQuestsCompleted: false,
+                            allQuestsCompletedCount: 0,
+                            allQuestsCompletedDate: null,
+                            createdAt: currentTimestamp
+                        });
+                        
+                        setTimeout(() => {
+                            location.reload();
+                        }, 500);
+                        return;
+                    } catch (createError) {
+                        console.error('Error creating profile:', createError);
+                        console.error('Error details:', {
+                            code: createError.code,
+                            message: createError.message,
+                            stack: createError.stack
+                        });
+                        
+                        const userDisplayNameElement = document.getElementById("userDisplayName");
+                        const userEmailElement = document.getElementById("userEmail");
+                        const missionListElement = document.getElementById("missionList");
+                        
+                        if (userDisplayNameElement) {
+                            userDisplayNameElement.textContent = user.email ? user.email.split("@")[0] : "User";
+                        }
+                        if (userEmailElement) {
+                            userEmailElement.textContent = user.email || "Unknown";
+                        }
+                        if (missionListElement) {
+                            let errorMsg = "Error creating profile. ";
+                            if (createError.code === 'permission-denied') {
+                                errorMsg += "Please check Firebase Firestore rules. Make sure 'allow create' is enabled for users collection.";
+                            } else {
+                                errorMsg += createError.message || 'Unknown error';
+                            }
+                            missionListElement.innerHTML = `<p style='color: #d32f2f; text-align: center; padding: 20px;'>${errorMsg}</p>`;
+                        }
                     }
                 }
             } catch (error) {
                 console.error("Error loading dashboard:", error);
+                console.error("Error details:", {
+                    message: error.message,
+                    code: error.code,
+                    stack: error.stack,
+                    name: error.name
+                });
+                
                 const missionListElement = document.getElementById("missionList");
                 const userDisplayNameElement = document.getElementById("userDisplayName");
                 const userEmailElement = document.getElementById("userEmail");
                 
+                let errorMessage = "Error loading data. ";
+                let userFriendlyMessage = "";
+                
+                // Check for specific error types
+                if (error.code === 'permission-denied') {
+                    userFriendlyMessage = "Permission denied. Please check Firebase Firestore rules.";
+                } else if (error.code === 'unavailable') {
+                    userFriendlyMessage = "Service temporarily unavailable. Please try again in a moment.";
+                } else if (error.message) {
+                    userFriendlyMessage = error.message;
+                } else {
+                    userFriendlyMessage = "Unknown error. Please check console for details.";
+                }
+                
+                errorMessage += userFriendlyMessage;
+                
                 if (missionListElement) {
-                    missionListElement.innerHTML = "<p style='color: #d32f2f; text-align: center; padding: 20px;'>Error loading data. Please refresh the page.</p>";
+                    missionListElement.innerHTML = `
+                        <div style='color: #d32f2f; text-align: center; padding: 20px;'>
+                            <p style='margin-bottom: 10px;'><strong>${errorMessage}</strong></p>
+                            <p style='font-size: 14px; margin-bottom: 10px;'>Please try:</p>
+                            <ul style='text-align: left; display: inline-block; font-size: 14px;'>
+                                <li>Check your internet connection</li>
+                                <li>Refresh the page (F5 or Ctrl+R)</li>
+                                <li>Check browser console (F12) for details</li>
+                            </ul>
+                            <button onclick='location.reload()' style='margin-top: 15px; padding: 10px 20px; background: var(--color-primary); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;'>Refresh Page</button>
+                        </div>
+                    `;
                 }
                 if (userDisplayNameElement) {
                     userDisplayNameElement.textContent = "Error";
@@ -2150,6 +2616,8 @@
                 if (userEmailElement) {
                     userEmailElement.textContent = "Unable to load";
                 }
+                
+                alert(`Error loading dashboard:\n\n${userFriendlyMessage}\n\nPlease check the browser console (F12) for more details.`);
             }
         }).catch((error) => {
             console.error("Auth error:", error);
@@ -2165,11 +2633,13 @@
                     if (result.success) {
                         window.location.href = "login.html";
                     } else {
-                        alert("Logout failed: " + (result.error || "Unknown error"));
+                        const errorMessage = getErrorMessage(result.error);
+                        alert(`Logout failed: ${errorMessage}`);
                     }
                 } catch (error) {
                     console.error("Logout error:", error);
-                    alert("An error occurred during logout. Please try again.");
+                    const errorMessage = getErrorMessage(error);
+                    alert(`An error occurred during logout: ${errorMessage}`);
                 }
             });
         }
@@ -2222,11 +2692,13 @@
                     if (result.success) {
                         window.location.href = "login.html";
                     } else {
-                        alert("Logout failed: " + (result.error || "Unknown error"));
+                        const errorMessage = getErrorMessage(result.error);
+                        alert(`Logout failed: ${errorMessage}`);
                     }
                 } catch (error) {
                     console.error("Logout error:", error);
-                    alert("An error occurred during logout. Please try again.");
+                    const errorMessage = getErrorMessage(error);
+                    alert(`An error occurred during logout: ${errorMessage}`);
                 }
             });
         }
@@ -2243,10 +2715,6 @@
             }
         });
         
-        document.addEventListener("visibilitychange", () => {
-            if (document.hidden) {
-            }
-        });
     </script>
 </body>
 </html>

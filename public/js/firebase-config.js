@@ -1,7 +1,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getAuth, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getStorage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC52G-pG-QPY0JDxFRADxb2EXXwPyXTUGc",
@@ -21,7 +22,17 @@ if (typeof window !== 'undefined') {
 }
 
 const auth = getAuth(app);
-const db = getFirestore(app);
 
-export { app, auth, db, analytics };
+// Set persistence to LOCAL so user stays logged in even after closing browser
+// User will only be logged out when they click "Sign Out"
+if (typeof window !== 'undefined') {
+  setPersistence(auth, browserLocalPersistence).catch((error) => {
+    console.error("Error setting auth persistence:", error);
+  });
+}
+
+const db = getFirestore(app);
+const storage = getStorage(app);
+
+export { app, auth, db, storage, analytics };
 

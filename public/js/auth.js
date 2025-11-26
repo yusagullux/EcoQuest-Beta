@@ -40,7 +40,6 @@ export async function signUp(email, password, displayName = null) {
       currentDailyQuests: [],
       dailyQuestsCompleted: [],
       questCompletionCount: {},
-      questStartTimes: {},
       dailyQuestCompletions: {},
       lastQuestCompletionTime: null,
       plants: [],
@@ -65,7 +64,6 @@ export async function signIn(email, password) {
     return { success: true, user: userCredential.user };
   } catch (error) {
     console.error("Sign in error:", error);
-    // Return the full error object so formatErrorMessage can access error.code
     return { success: false, error: error };
   }
 }

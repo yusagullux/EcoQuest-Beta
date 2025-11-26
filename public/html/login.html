@@ -41,8 +41,15 @@
     </form>
 
     <script type="module">
-      import { signIn } from "../js/auth.js";
+      import { signIn, onAuthChange } from "../js/auth.js";
       import { validateEmail, validatePassword, formatErrorMessage, checkOnlineStatus } from "../js/utils.js";
+      
+      // Check if user is already logged in - if yes, redirect to dashboard
+      onAuthChange((user) => {
+        if (user) {
+          window.location.href = "dashboard.html";
+        }
+      });
       
       const loginForm = document.getElementById("loginForm");
       const errorMessage = document.getElementById("errorMessage");
