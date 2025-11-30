@@ -36,7 +36,14 @@ service cloud.firestore {
       // Tiimi saab luua ainult kasutaja, kes märgitakse juhiks
       allow create: if isAuthenticated() && request.resource.data.leaderId == request.auth.uid;
       
-      // Uuendused ja kustutamine: vaid juht või kaaskapten
+      // Liitumiseks: kasutaja saab lisada enda members.{userId} väljale (veel pole liige)
+      // Kontrollib, et kasutaja pole veel liige ja lisab ainult enda
+      allow update: if isAuthenticated() && 
+        !(request.auth.uid in resource.data.members) &&
+        request.auth.uid in request.resource.data.members &&
+        request.resource.data.members[request.auth.uid].role == 'member';
+      
+      // Uuendused ja kustutamine: vaid juht või kaaskapten (kui juba liige)
       allow update, delete: if isTeamMember(teamId) && (
         isTeamLeader(teamId) ||
         (request.auth.uid in resource.data.members && resource.data.members[request.auth.uid].role in ['leader', 'co_leader'])
