@@ -2247,6 +2247,49 @@ main {
     flex-wrap: wrap;
 }
 
+@media (max-width: 767px) {
+    .team-mission-card,
+    .team-mission-template {
+        padding: 12px;
+    }
+    
+    .team-mission-head {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .team-mission-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .team-mission-actions .team-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .team-mission-progress {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    
+    .team-meta {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .team-meta-actions {
+        width: 100%;
+        display: flex;
+        gap: 8px;
+    }
+    
+    .team-meta-actions .team-btn {
+        flex: 1;
+    }
+}
+
 .team-mission-submissions {
     margin-top: 12px;
     display: grid;
