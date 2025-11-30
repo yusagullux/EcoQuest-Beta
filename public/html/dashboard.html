@@ -43,7 +43,10 @@
     <main id="dashboard" role="main">
         <div class="user-info" role="region" aria-label="User Information">
             <h2>Welcome, <span id="userDisplayName">User</span>! <span id="userBadge" class="badge-display" aria-label="Current Badge"></span></h2>
-            <p>Email: <span id="userEmail" class="user-email" aria-label="User Email">Loading...</span></p>
+            <div class="user-level-info">
+                <span class="level-badge">Level <span id="userLevel">1</span></span>
+                <p>Email: <span id="userEmail" class="user-email" aria-label="User Email">Loading...</span></p>
+            </div>
         </div>
 
         <div class="user-stats" role="region" aria-label="User Statistics">
@@ -3921,8 +3924,10 @@
                     
                     const userDisplayNameElement = document.getElementById("userDisplayName");
                     const userEmailElement = document.getElementById("userEmail");
+                    const userLevelElement = document.getElementById("userLevel");
                     if (userDisplayNameElement) userDisplayNameElement.textContent = displayName || "User";
                     if (userEmailElement) userEmailElement.textContent = user.email || "Unknown";
+                    if (userLevelElement) userLevelElement.textContent = level || 1;
                     
                     const badgeElement = document.getElementById("userBadge");
                     if (badgeElement) {
