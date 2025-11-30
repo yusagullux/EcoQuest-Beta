@@ -570,9 +570,12 @@ async function assignTeamMission(profile, templateId) {
         throw new Error("Mission template not found.");
     }
     
-    // Fetch fresh missions from Firestore to check for duplicates
+    // Fetch fresh missions from Firestore to check for duplicates (always check latest data)
     const currentMissions = await fetchTeamMissions(profile.teamId);
-    const existingMission = currentMissions.find(m => m.missionTemplateId === templateId && m.status !== 'completed');
+    const existingMission = currentMissions.find(m => 
+        m.missionTemplateId === templateId && 
+        (m.status === 'active' || m.status === 'ready_for_review' || !m.status)
+    );
     if (existingMission) {
         throw new Error(`Mission "${template.title}" is already active. Complete it first before assigning again.`);
     }
