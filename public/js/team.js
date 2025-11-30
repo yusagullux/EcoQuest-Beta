@@ -570,13 +570,14 @@ async function assignTeamMission(profile, templateId) {
         throw new Error("Mission template not found.");
     }
     
-    // Check if this mission template is already active
-    const existingMission = activeTeamMissions.find(m => m.missionTemplateId === templateId);
+    // Fetch fresh missions from Firestore to check for duplicates
+    const currentMissions = await fetchTeamMissions(profile.teamId);
+    const existingMission = currentMissions.find(m => m.missionTemplateId === templateId && m.status !== 'completed');
     if (existingMission) {
         throw new Error(`Mission "${template.title}" is already active. Complete it first before assigning again.`);
     }
     
-    if (activeTeamMissions.length >= TEAM_LIMITS.maxActiveMissions) {
+    if (currentMissions.length >= TEAM_LIMITS.maxActiveMissions) {
         throw new Error("Maximum active missions reached.");
     }
     const todayKey = getTodayDateString();
