@@ -44,7 +44,7 @@
       import { signIn, onAuthChange } from "../js/auth.js";
       import { validateEmail, validatePassword, formatErrorMessage, checkOnlineStatus } from "../js/utils.js";
       
-      // Check if user is already logged in - if yes, redirect to dashboard
+      // Kontrollib kas kasutaja on juba sees – jah-korral suunab töölauale
       onAuthChange((user) => {
         if (user) {
           window.location.href = "dashboard.html";

@@ -314,6 +314,9 @@ async function loadProfileData() {
         const totalCarbonReducedEl = document.getElementById("totalCarbonReduced");
         const replayModeCard = document.getElementById("replayModeCard");
         const replayModeCount = document.getElementById("replayModeCount");
+        const teamInfoCard = document.getElementById("teamInfoCard");
+        const teamNameDisplay = document.getElementById("teamNameDisplay");
+        const teamRoleDisplay = document.getElementById("teamRoleDisplay");
 
         if (profileName) profileName.textContent = displayName;
         if (profileEmail) profileEmail.textContent = email;
@@ -338,6 +341,30 @@ async function loadProfileData() {
             } else {
                 replayModeCard.style.display = "none";
             }
+        }
+
+        if (profile.teamId && profile.teamId !== null) {
+            try {
+                const { doc, getDoc } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+                const { db } = await import("./firebase-config.js");
+                const teamDoc = await getDoc(doc(db, "teams", profile.teamId));
+                if (teamDoc.exists()) {
+                    const teamData = teamDoc.data();
+                    if (teamInfoCard) teamInfoCard.style.display = "flex";
+                    if (teamNameDisplay) teamNameDisplay.textContent = teamData.name || "Team";
+                    if (teamRoleDisplay) {
+                        const role = profile.teamRole || "member";
+                        teamRoleDisplay.textContent = role.charAt(0).toUpperCase() + role.slice(1);
+                    }
+                } else {
+                    if (teamInfoCard) teamInfoCard.style.display = "none";
+                }
+            } catch (error) {
+                console.error("Error loading team info:", error);
+                if (teamInfoCard) teamInfoCard.style.display = "none";
+            }
+        } else {
+            if (teamInfoCard) teamInfoCard.style.display = "none";
         }
 
         const ranking = await calculateRanking(profileUserId);

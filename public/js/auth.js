@@ -47,6 +47,25 @@ export async function signUp(email, password, displayName = null) {
       allQuestsCompleted: false,
       allQuestsCompletedCount: 0,
       allQuestsCompletedDate: null,
+      teamId: null,
+      teamRole: null,
+      teamStats: {
+        missionsCompleted: 0,
+        xpEarned: 0,
+        ecoEarned: 0,
+        approvalsGiven: 0
+      },
+      notificationPreferences: {
+        dailyReminderEnabled: true,
+        reminderHour: 9,
+        teamUpdates: true,
+        questTips: true
+      },
+      reminderMetadata: {
+        lastReminderDate: null,
+        pendingReminderId: null
+      },
+      insightSnapshots: [],
       createdAt: currentTimestamp
     });
     

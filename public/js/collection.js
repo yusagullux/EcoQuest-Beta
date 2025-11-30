@@ -3,7 +3,7 @@ import { requireAuth } from "./auth-guard.js";
 import { logOut, getUserProfile, updateUserProfile } from "./auth.js";
 
 // ============================================
-// STATE MANAGEMENT
+// OLEKUHALDUS
 // ============================================
 
 const TOAST_DISPLAY_DURATION = 3000;
@@ -67,7 +67,7 @@ function renderCollection(plants) {
     
     if (!plantsGrid) return;
 
-    // Show empty state if no plants
+    // Näitab tühja seisu, kui taimi pole
     if (plants.length === 0) {
         plantsGrid.innerHTML = "";
         if (emptyCollection) {
@@ -80,10 +80,10 @@ function renderCollection(plants) {
         emptyCollection.style.display = "none";
     }
 
-    // Group plants by type
+    // Rühmitab taimed tüübi järgi
     const groupedPlants = groupPlantsByType(plants);
     
-    // Filter by rarity if needed
+    // Filtreerib harulduse järgi kui vaja
     let filteredPlants = groupedPlants;
     if (currentFilter !== "all") {
         filteredPlants = groupedPlants.filter(plant => plant.rarity === currentFilter);
@@ -140,7 +140,7 @@ function createCollectionCard(plantGroup) {
         </div>
     `;
 
-    // Add sell button event
+    // Lisab müüginupu sündmuse
     if (canSell) {
         const sellButton = card.querySelector(".sell-button");
         if (sellButton) {
@@ -170,7 +170,7 @@ function filterCollection(selectedRarity) {
 }
 
 // ============================================
-// BUSINESS LOGIC
+// ÄRILOOGIKA
 // ============================================
 
 async function loadUserData() {
@@ -245,18 +245,18 @@ async function handleSellPlant(plantGroupData, sellPriceAmount) {
 }
 
 // ============================================
-// INITIALIZATION
+// INITSIALISEERIMINE
 // ============================================
 
 function initializeCollection() {
-    // Filter buttons
+    // Filtri nupud
     document.querySelectorAll(".filter-btn").forEach(btn => {
         btn.addEventListener("click", () => {
             filterCollection(btn.dataset.rarity);
         });
     });
 
-    // Logout buttons
+    // Väljalogimise nupud
     const logoutButton = document.getElementById("logoutButton");
     const logoutButtonMobile = document.getElementById("logoutButtonMobile");
 
@@ -278,7 +278,7 @@ function initializeCollection() {
         });
     }
 
-    // Mobile menu toggle
+    // Mobiilse menüü lüliti
     const mobileMenuToggle = document.getElementById("mobileMenuToggle");
     const mobileMenu = document.getElementById("mobileMenu");
 
@@ -307,7 +307,7 @@ function initializeCollection() {
         });
     }
 
-    // Hide loading state
+    // Peidab laadimisoleku
     const loadingState = document.getElementById("loadingState");
     if (loadingState) {
         loadingState.style.display = "none";
@@ -315,7 +315,7 @@ function initializeCollection() {
 }
 
 // ============================================
-// MAIN ENTRY POINT
+// PEASISEND (ENTRY POINT)
 // ============================================
 
 requireAuth().then(async (user) => {
