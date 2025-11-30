@@ -841,16 +841,31 @@ function bindTeamUI(profile) {
     if (modalSubmit) {
         modalSubmit.addEventListener('click', async () => {
             const input = document.getElementById('teamModalInput');
-            if (!input) return;
-            const value = input.value;
+            if (!input) {
+                alert("Input field not found.");
+                return;
+            }
+            const value = input.value.trim();
+            if (!value) {
+                alert("Please enter a team name or code.");
+                return;
+            }
             try {
                 if (teamModalMode === 'create') {
+                    if (value.length < 3) {
+                        alert("Team name must be at least 3 characters.");
+                        return;
+                    }
                     const teamId = await createTeamDocument(profile, value);
                     profile.teamId = teamId;
                     profile.teamRole = "leader";
                     await refreshTeamData(profile);
                     alert(`Team created! Share code: ${currentTeamData.joinCode}`);
                 } else {
+                    if (value.length < 6) {
+                        alert("Please enter a valid 6-character team code.");
+                        return;
+                    }
                     const teamId = await joinTeamByCode(profile, value);
                     profile.teamId = teamId;
                     profile.teamRole = "member";
@@ -859,7 +874,8 @@ function bindTeamUI(profile) {
                 }
                 closeTeamManagerModal();
             } catch (error) {
-                alert(error.message || "Unable to process the request.");
+                console.error("Team operation error:", error);
+                alert(error.message || "Unable to process the request. Please try again.");
             }
         });
     }
