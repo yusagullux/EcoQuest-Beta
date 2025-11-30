@@ -283,7 +283,8 @@ function renderTeamMissionLibrary(profile) {
         return;
     }
     library.innerHTML = TEAM_MISSION_LIBRARY.map(mission => {
-        const disabled = !profile.teamId || (profile.teamRole !== 'leader' && profile.teamRole !== 'co_leader');
+        const isAlreadyActive = activeTeamMissions.some(m => m.missionTemplateId === mission.id);
+        const disabled = !profile.teamId || (profile.teamRole !== 'leader' && profile.teamRole !== 'co_leader') || isAlreadyActive;
         return `
             <div class="team-mission-template">
                 <div>
@@ -294,13 +295,14 @@ function renderTeamMissionLibrary(profile) {
                         <span>Reward: +${mission.xpReward} XP / +${mission.ecoReward} Eco</span>
                         <span>Need ${mission.requiredSubmissions} teammates</span>
                     </div>
+                    ${isAlreadyActive ? '<p style="color: #4caf50; font-size: 12px; margin-top: 8px;">✓ Already active</p>' : ''}
                 </div>
                 <button 
                     class="team-btn ${disabled ? 'ghost' : ''}" 
                     data-team-action="assign" 
                     data-template-id="${mission.id}"
                     ${disabled ? 'disabled' : ''}>
-                    Assign
+                    ${isAlreadyActive ? 'Active' : 'Assign'}
                 </button>
             </div>
         `;
@@ -327,7 +329,7 @@ function renderActiveTeamMissions(profile) {
     container.innerHTML = activeTeamMissions.map(mission => {
         const submissions = mission.submissions || [];
         const requirement = Math.max(1, mission.requiredSubmissions || 1);
-        const progress = Math.min(100, Math.round((submissions.length / requirement) * 100));
+        const progress = mission.progress !== undefined ? mission.progress : Math.min(100, Math.round((submissions.length / requirement) * 100));
         const ready = submissions.length >= requirement;
         const alreadySubmitted = submissions.some(s => s.userId === currentUser.uid);
         const canApprove = ready && (profile.teamRole === 'leader' || profile.teamRole === 'co_leader');
@@ -567,6 +569,13 @@ async function assignTeamMission(profile, templateId) {
     if (!template) {
         throw new Error("Mission template not found.");
     }
+    
+    // Check if this mission template is already active
+    const existingMission = activeTeamMissions.find(m => m.missionTemplateId === templateId);
+    if (existingMission) {
+        throw new Error(`Mission "${template.title}" is already active. Complete it first before assigning again.`);
+    }
+    
     if (activeTeamMissions.length >= TEAM_LIMITS.maxActiveMissions) {
         throw new Error("Maximum active missions reached.");
     }
@@ -627,15 +636,29 @@ async function submitTeamMissionProgress(profile, missionId, note) {
         }
     ];
     const ready = newSubmissions.length >= mission.requiredSubmissions;
+    const progress = Math.min(100, Math.round((newSubmissions.length / mission.requiredSubmissions) * 100));
+    
     await updateDoc(missionRef, {
         submissions: newSubmissions,
         status: ready ? "ready_for_review" : "active",
-        lastUpdatedAt: new Date().toISOString()
+        lastUpdatedAt: new Date().toISOString(),
+        progress: progress
     });
+    
+    // Update local state
     activeTeamMissions = activeTeamMissions.map(m => 
-        m.id === missionId ? { ...m, submissions: newSubmissions, status: ready ? "ready_for_review" : "active" } : m
+        m.id === missionId ? { ...m, submissions: newSubmissions, status: ready ? "ready_for_review" : "active", progress: progress } : m
     );
+    
+    // Refresh UI to show updated progress
     renderActiveTeamMissions(profile);
+    
+    // Show feedback
+    if (ready) {
+        alert(`Great! Mission is ready for review. ${newSubmissions.length}/${mission.requiredSubmissions} team members have submitted.`);
+    } else {
+        alert(`Progress updated! ${newSubmissions.length}/${mission.requiredSubmissions} team members have submitted.`);
+    }
 }
 
 async function approveTeamMission(profile, missionId) {
