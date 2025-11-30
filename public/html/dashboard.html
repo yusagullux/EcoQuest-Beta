@@ -689,7 +689,6 @@
         let questReflectionNotes = {};
         let reflectionResolver = null;
         let reflectionPendingIds = [];
-        let teamUIBound = false;
         let currentProfileData = null;
         
         // Privaatsete missioonide loend, mille puhul foto pole vajalik.
@@ -1520,7 +1519,6 @@
             activeTeamMissions = activeTeamMissions.filter(m => m.id !== missionId);
             await refreshTeamData(profile);
             renderActiveTeamMissions(profile);
-            renderWeeklyInsights(profile);
             pushNotification(`Approved "${mission.title}". Rewards sent to teammates.`, "success");
         }
 
@@ -3987,11 +3985,6 @@
                                 missionListElement.innerHTML = `<p style='color: #d32f2f; text-align: center; padding: 20px;'>Error loading quests: ${error.message}</p>`;
                             }
                         }
-                    }
-                    
-                    if (!teamUIBound) {
-                        bindTeamUI(profile);
-                        teamUIBound = true;
                     }
                     
                 } else {
