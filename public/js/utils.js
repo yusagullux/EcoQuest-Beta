@@ -1,5 +1,5 @@
 // ============================================
-// ECOQUEST TÖÖRIISTAD – JAGATUD FUNKTSIOONID
+// ECOQUEST UTILITY FUNCTIONS – SHARED FUNCTIONS
 // ============================================
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -86,10 +86,11 @@ export function formatErrorMessage(error) {
         return 'An unexpected error occurred. Please try again.';
     }
     
-    // Kontrollib esmalt error.code välja (Firebase'i standard)
+    // First check error.code field (Firebase standard)
     const errorCode = error.code || '';
     const errorMessage = error.message || error.toString();
     
+    // User-friendly error messages
     const userFriendlyMessages = {
         'auth/email-already-in-use': 'This email is already registered. Please sign in instead.',
         'auth/invalid-email': 'Please enter a valid email address.',
@@ -106,19 +107,19 @@ export function formatErrorMessage(error) {
         'unavailable': 'Service is temporarily unavailable. Please try again later.'
     };
     
-    // Kõigepealt kontrollib error.code väärtust
+    // First check error.code value
     if (errorCode && userFriendlyMessages[errorCode]) {
         return userFriendlyMessages[errorCode];
     }
     
-    // Seejärel kontrollib error.message sisu
+    // Then check error.message content
     for (const [key, message] of Object.entries(userFriendlyMessages)) {
         if (errorMessage.includes(key)) {
             return message;
         }
     }
     
-    // Tagastab üldise sõnumi, kui sobivust ei leita
+    // Return generic message if no match found
     return 'Invalid email or password. Please check your credentials and try again.';
 }
 

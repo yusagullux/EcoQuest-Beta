@@ -1,16 +1,16 @@
 // ============================================
-// ECOQUESTI POOD – PÕHILOOGIKA
+// ECOQUEST SHOP – MAIN LOGIC
 // ============================================
 
 import { requireAuth } from "./auth-guard.js";
 import { logOut, getUserProfile, updateUserProfile } from "./auth.js";
 
 // ============================================
-// TAIMEANDMED
+// PLANT DATA
 // ============================================
 
 const PLANTS = [
-    // Levinud taimed
+    // Common plants
     {
         id: "plant_1",
         name: "Sunflower",
@@ -39,7 +39,7 @@ const PLANTS = [
         rarity: "common",
         price: 55
     },
-    // Haruldased taimed
+    // Rare plants
     {
         id: "plant_5",
         name: "Rose",
@@ -68,7 +68,7 @@ const PLANTS = [
         rarity: "rare",
         price: 160
     },
-    // Eepilised taimed
+    // Efsanevi bitkiler
     {
         id: "plant_9",
         name: "Bamboo",
@@ -97,7 +97,7 @@ const PLANTS = [
         rarity: "epic",
         price: 420
     },
-    // Legendaarseid taimed
+    // Legendary plants
     {
         id: "plant_13",
         name: "Golden Tree",
@@ -115,7 +115,7 @@ const PLANTS = [
 ];
 
 // ============================================
-// OLEKUHALDUS
+// STATE MANAGEMENT
 // ============================================
 
 const TOAST_DISPLAY_DURATION = 3000;
@@ -128,7 +128,7 @@ let userCollection = [];
 let currentFilter = DEFAULT_FILTER;
 
 // ============================================
-// KASUTAJALIIDESE FUNKTSIOONID
+// USER INTERFACE FUNCTIONS
 // ============================================
 
 function showToast(message, type = "success") {
@@ -237,7 +237,7 @@ function filterPlants(selectedRarity) {
 }
 
 // ============================================
-// ÄRILOOGIKA
+// BUSINESS LOGIC
 // ============================================
 
 async function loadUserData() {
@@ -309,14 +309,14 @@ async function handleBuyPlant(plantData) {
 
 
 function initializeShop() {
-    // Filtri nupud
+    // Filter buttons
     document.querySelectorAll(".filter-btn").forEach(btn => {
         btn.addEventListener("click", () => {
             filterPlants(btn.dataset.rarity);
         });
     });
 
-    // Väljalogimine
+    // Logout buttons
     const logoutButton = document.getElementById("logoutButton");
     const logoutButtonMobile = document.getElementById("logoutButtonMobile");
 
@@ -338,7 +338,7 @@ function initializeShop() {
         });
     }
 
-    // Mobiilse menüü lüliti
+    // Mobile menu toggle
     const mobileMenuToggle = document.getElementById("mobileMenuToggle");
     const mobileMenu = document.getElementById("mobileMenu");
 
@@ -367,7 +367,7 @@ function initializeShop() {
         });
     }
 
-    // Laadimisolek
+    // Hide loading state
     const loadingState = document.getElementById("loadingState");
     if (loadingState) {
         loadingState.style.display = "none";

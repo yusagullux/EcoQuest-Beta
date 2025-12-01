@@ -26,20 +26,38 @@ let currentProfileData = null;
 
 const TEAM_LIMITS = {
     maxMembers: 8,
-    maxActiveMissions: 3,
-    dailyMissionCap: 5,
-    memberSubmissionCooldownMinutes: 60,
+    maxActiveMissions: 5, // Increased from 3 to allow more simultaneous missions
+    dailyMissionCap: 8, // Increased from 5 to allow more daily missions
+    memberSubmissionCooldownMinutes: 30, // Reduced from 60 for better engagement
     minUniqueSubmitters: 2,
-    requiredApprovals: 1
+    requiredApprovals: 1,
+    maxMissionsPerDifficulty: {
+        Easy: 3,
+        Medium: 2,
+        Hard: 1
+    }
 };
 
 const TEAM_REWARD_RULES = {
     ecoRatio: 0.6,
     streakBonusPercent: 10,
-    minReflectionLength: 20
+    minReflectionLength: 20,
+    // Difficulty-based reward multipliers
+    difficultyMultipliers: {
+        Easy: 1.0,
+        Medium: 1.2,
+        Hard: 1.5
+    },
+    // Participation bonus - more members = slightly better rewards
+    participationBonus: {
+        min: 1.0,
+        max: 1.15, // Up to 15% bonus for full team participation
+        threshold: 6 // Full bonus at 6+ members
+    }
 };
 
 const TEAM_MISSION_LIBRARY = [
+    // Easy Missions - Quick wins for team building
     {
         id: "team_recycle_15",
         title: "Recycle 15 Plastic Bottles",
@@ -50,7 +68,8 @@ const TEAM_MISSION_LIBRARY = [
         ecoReward: 140,
         requiredSubmissions: 3,
         category: "Recycling",
-        cooldownHours: 12
+        cooldownHours: 12,
+        carbonReduction: 3.5
     },
     {
         id: "team_cleanup_block",
@@ -62,31 +81,8 @@ const TEAM_MISSION_LIBRARY = [
         ecoReward: 160,
         requiredSubmissions: 3,
         category: "Clean-Up",
-        cooldownHours: 12
-    },
-    {
-        id: "team_commute_swap",
-        title: "Commute Sustainably Together",
-        description: "On the same day, at least 3 teammates should bike, walk or take transit instead of a car trip.",
-        icon: "🚶",
-        difficulty: "Medium",
-        xpReward: 300,
-        ecoReward: 180,
-        requiredSubmissions: 3,
-        category: "Transportation",
-        cooldownHours: 18
-    },
-    {
-        id: "team_water_saver",
-        title: "Save 50 Liters of Water",
-        description: "Each teammate shortens showers or reuses water to collectively save about 50 liters.",
-        icon: "💧",
-        difficulty: "Medium",
-        xpReward: 320,
-        ecoReward: 190,
-        requiredSubmissions: 3,
-        category: "Water Saving",
-        cooldownHours: 18
+        cooldownHours: 12,
+        carbonReduction: 4.0
     },
     {
         id: "team_power_down",
@@ -98,7 +94,8 @@ const TEAM_MISSION_LIBRARY = [
         ecoReward: 130,
         requiredSubmissions: 2,
         category: "Energy",
-        cooldownHours: 10
+        cooldownHours: 10,
+        carbonReduction: 2.5
     },
     {
         id: "team_micro_garden",
@@ -110,7 +107,220 @@ const TEAM_MISSION_LIBRARY = [
         ecoReward: 120,
         requiredSubmissions: 3,
         category: "Gardening",
-        cooldownHours: 12
+        cooldownHours: 12,
+        carbonReduction: 2.0
+    },
+    {
+        id: "team_reusable_day",
+        title: "Zero Single-Use Day",
+        description: "All participating members avoid single-use plastics for one full day.",
+        icon: "🥤",
+        difficulty: "Easy",
+        xpReward: 250,
+        ecoReward: 150,
+        requiredSubmissions: 3,
+        category: "Recycling",
+        cooldownHours: 12,
+        carbonReduction: 3.0
+    },
+    {
+        id: "team_led_swap",
+        title: "Switch to LED Bulbs",
+        description: "Replace at least 5 incandescent bulbs with LED bulbs across team households.",
+        icon: "💡",
+        difficulty: "Easy",
+        xpReward: 280,
+        ecoReward: 170,
+        requiredSubmissions: 3,
+        category: "Energy",
+        cooldownHours: 24,
+        carbonReduction: 5.0
+    },
+    
+    // Medium Missions - Moderate effort, better rewards
+    {
+        id: "team_commute_swap",
+        title: "Commute Sustainably Together",
+        description: "On the same day, at least 3 teammates should bike, walk or take transit instead of a car trip.",
+        icon: "🚶",
+        difficulty: "Medium",
+        xpReward: 300,
+        ecoReward: 180,
+        requiredSubmissions: 3,
+        category: "Transportation",
+        cooldownHours: 18,
+        carbonReduction: 6.0
+    },
+    {
+        id: "team_water_saver",
+        title: "Save 50 Liters of Water",
+        description: "Each teammate shortens showers or reuses water to collectively save about 50 liters.",
+        icon: "💧",
+        difficulty: "Medium",
+        xpReward: 320,
+        ecoReward: 190,
+        requiredSubmissions: 3,
+        category: "Water Saving",
+        cooldownHours: 18,
+        carbonReduction: 2.5
+    },
+    {
+        id: "team_meatless_day",
+        title: "Team Meatless Monday",
+        description: "All participating members choose vegetarian meals for one day.",
+        icon: "🥗",
+        difficulty: "Medium",
+        xpReward: 350,
+        ecoReward: 210,
+        requiredSubmissions: 4,
+        category: "Sustainable Living",
+        cooldownHours: 24,
+        carbonReduction: 8.0
+    },
+    {
+        id: "team_local_produce",
+        title: "Buy Local Produce",
+        description: "Team members purchase locally grown food items to reduce transportation emissions.",
+        icon: "🛒",
+        difficulty: "Medium",
+        xpReward: 330,
+        ecoReward: 200,
+        requiredSubmissions: 3,
+        category: "Sustainable Living",
+        cooldownHours: 18,
+        carbonReduction: 4.5
+    },
+    {
+        id: "team_compost_setup",
+        title: "Start Composting",
+        description: "Set up composting systems in at least 3 team households.",
+        icon: "🌿",
+        difficulty: "Medium",
+        xpReward: 340,
+        ecoReward: 205,
+        requiredSubmissions: 3,
+        category: "Sustainable Living",
+        cooldownHours: 24,
+        carbonReduction: 6.0
+    },
+    {
+        id: "team_donation_drive",
+        title: "Donation Drive",
+        description: "Collect and donate clothes, electronics, or books instead of throwing them away.",
+        icon: "📦",
+        difficulty: "Medium",
+        xpReward: 360,
+        ecoReward: 220,
+        requiredSubmissions: 4,
+        category: "Recycling",
+        cooldownHours: 24,
+        carbonReduction: 10.0
+    },
+    {
+        id: "team_beach_cleanup",
+        title: "Beach or Park Cleanup",
+        description: "Organize a team cleanup event at a local beach, park, or natural area.",
+        icon: "🏖️",
+        difficulty: "Medium",
+        xpReward: 380,
+        ecoReward: 230,
+        requiredSubmissions: 4,
+        category: "Clean-Up",
+        cooldownHours: 24,
+        carbonReduction: 12.0
+    },
+    {
+        id: "team_carpool_week",
+        title: "Carpool Challenge",
+        description: "Share rides for at least 5 trips during the week instead of driving alone.",
+        icon: "🚗",
+        difficulty: "Medium",
+        xpReward: 370,
+        ecoReward: 225,
+        requiredSubmissions: 3,
+        category: "Transportation",
+        cooldownHours: 24,
+        carbonReduction: 15.0
+    },
+    
+    // Hard Missions - Significant effort, high rewards
+    {
+        id: "team_energy_audit",
+        title: "Home Energy Audit",
+        description: "Conduct energy audits in team households and implement at least 3 improvements.",
+        icon: "📊",
+        difficulty: "Hard",
+        xpReward: 500,
+        ecoReward: 300,
+        requiredSubmissions: 4,
+        category: "Energy",
+        cooldownHours: 48,
+        carbonReduction: 20.0
+    },
+    {
+        id: "team_garden_project",
+        title: "Community Garden Project",
+        description: "Start or contribute to a community garden, planting at least 10 different plants.",
+        icon: "🌳",
+        difficulty: "Hard",
+        xpReward: 550,
+        ecoReward: 330,
+        requiredSubmissions: 5,
+        category: "Gardening",
+        cooldownHours: 72,
+        carbonReduction: 25.0
+    },
+    {
+        id: "team_zero_waste_week",
+        title: "Zero Waste Week",
+        description: "Team members attempt zero-waste living for one full week.",
+        icon: "♻️",
+        difficulty: "Hard",
+        xpReward: 600,
+        ecoReward: 360,
+        requiredSubmissions: 5,
+        category: "Sustainable Living",
+        cooldownHours: 168,
+        carbonReduction: 30.0
+    },
+    {
+        id: "team_solar_advocacy",
+        title: "Renewable Energy Advocacy",
+        description: "Research and share information about renewable energy options in your area.",
+        icon: "☀️",
+        difficulty: "Hard",
+        xpReward: 520,
+        ecoReward: 310,
+        requiredSubmissions: 4,
+        category: "Energy",
+        cooldownHours: 48,
+        carbonReduction: 18.0
+    },
+    {
+        id: "team_tree_planting",
+        title: "Tree Planting Event",
+        description: "Organize or participate in a tree planting event, planting at least 5 trees.",
+        icon: "🌲",
+        difficulty: "Hard",
+        xpReward: 580,
+        ecoReward: 350,
+        requiredSubmissions: 5,
+        category: "Gardening",
+        cooldownHours: 72,
+        carbonReduction: 50.0
+    },
+    {
+        id: "team_water_conservation",
+        title: "Water Conservation Project",
+        description: "Install water-saving devices or implement conservation practices in multiple households.",
+        icon: "💧",
+        difficulty: "Hard",
+        xpReward: 540,
+        ecoReward: 320,
+        requiredSubmissions: 4,
+        category: "Water Saving",
+        cooldownHours: 48,
+        carbonReduction: 15.0
     }
 ];
 
@@ -282,31 +492,86 @@ function renderTeamMissionLibrary(profile) {
         library.innerHTML = `<p class="team-muted">Join a team to unlock collaborative missions.</p>`;
         return;
     }
-    library.innerHTML = TEAM_MISSION_LIBRARY.map(mission => {
-        const isAlreadyActive = activeTeamMissions.some(m => m.missionTemplateId === mission.id);
-        const disabled = !profile.teamId || (profile.teamRole !== 'leader' && profile.teamRole !== 'co_leader') || isAlreadyActive;
-        return `
-            <div class="team-mission-template">
-                <div>
-                    <h4>${mission.icon} ${escapeHtml(mission.title)}</h4>
-                    <p>${escapeHtml(mission.description)}</p>
-                    <div class="mission-meta">
-                        <span>Difficulty: ${mission.difficulty}</span>
-                        <span>Reward: +${mission.xpReward} XP / +${mission.ecoReward} Eco</span>
-                        <span>Need ${mission.requiredSubmissions} teammates</span>
+    
+    // Group missions by difficulty
+    const missionsByDifficulty = {
+        Easy: TEAM_MISSION_LIBRARY.filter(m => m.difficulty === 'Easy'),
+        Medium: TEAM_MISSION_LIBRARY.filter(m => m.difficulty === 'Medium'),
+        Hard: TEAM_MISSION_LIBRARY.filter(m => m.difficulty === 'Hard')
+    };
+    
+    let html = '';
+    
+    // Render each difficulty category
+    ['Easy', 'Medium', 'Hard'].forEach(difficulty => {
+        const missions = missionsByDifficulty[difficulty];
+        if (missions.length === 0) return;
+        
+        const activeCount = activeTeamMissions.filter(m => m.difficulty === difficulty).length;
+        const maxCount = TEAM_LIMITS.maxMissionsPerDifficulty[difficulty] || 999;
+        const canAssignMore = activeCount < maxCount;
+        
+        html += `
+            <div class="mission-difficulty-section">
+                <h3 class="difficulty-header difficulty-${difficulty.toLowerCase()}">
+                    ${difficulty} Missions 
+                    <span class="mission-count-badge">${activeCount}/${maxCount} active</span>
+                </h3>
+                <div class="mission-templates-grid">
+        `;
+        
+        missions.forEach(mission => {
+            const isAlreadyActive = activeTeamMissions.some(m => m.missionTemplateId === mission.id);
+            const disabled = !profile.teamId || 
+                           (profile.teamRole !== 'leader' && profile.teamRole !== 'co_leader') || 
+                           isAlreadyActive || 
+                           !canAssignMore;
+            
+            // Calculate potential rewards with team size bonus
+            const teamSize = currentTeamData?.members ? Object.keys(currentTeamData.members).length : 1;
+            const participationMultiplier = Math.min(
+                TEAM_REWARD_RULES.participationBonus.max,
+                TEAM_REWARD_RULES.participationBonus.min + 
+                ((teamSize / TEAM_REWARD_RULES.participationBonus.threshold) * 
+                 (TEAM_REWARD_RULES.participationBonus.max - TEAM_REWARD_RULES.participationBonus.min))
+            );
+            const difficultyMultiplier = TEAM_REWARD_RULES.difficultyMultipliers[mission.difficulty] || 1.0;
+            const potentialXp = Math.floor(mission.xpReward * difficultyMultiplier * participationMultiplier);
+            const potentialEco = Math.floor(mission.ecoReward * difficultyMultiplier * participationMultiplier);
+            
+            html += `
+                <div class="team-mission-template ${isAlreadyActive ? 'active' : ''}">
+                    <div>
+                        <h4>${mission.icon} ${escapeHtml(mission.title)}</h4>
+                        <p>${escapeHtml(mission.description)}</p>
+                        <div class="mission-meta">
+                            <span class="difficulty-badge difficulty-${mission.difficulty.toLowerCase()}">${mission.difficulty}</span>
+                            <span>Reward: +${potentialXp} XP / +${potentialEco} Eco</span>
+                            <span>Need ${mission.requiredSubmissions} teammates</span>
+                            ${mission.carbonReduction ? `<span>🌍 ${mission.carbonReduction} kg CO₂</span>` : ''}
+                            ${mission.cooldownHours ? `<span>⏱️ ${mission.cooldownHours}h cooldown</span>` : ''}
+                        </div>
+                        ${isAlreadyActive ? '<p style="color: #4caf50; font-size: 12px; margin-top: 8px;">✓ Already active</p>' : ''}
+                        ${!canAssignMore && !isAlreadyActive ? '<p style="color: #ff9800; font-size: 12px; margin-top: 8px;">⚠️ Limit reached for this difficulty</p>' : ''}
                     </div>
-                    ${isAlreadyActive ? '<p style="color: #4caf50; font-size: 12px; margin-top: 8px;">✓ Already active</p>' : ''}
+                    <button 
+                        class="team-btn ${disabled ? 'ghost' : ''}" 
+                        data-team-action="assign" 
+                        data-template-id="${mission.id}"
+                        ${disabled ? 'disabled' : ''}>
+                        ${isAlreadyActive ? 'Active' : 'Assign'}
+                    </button>
                 </div>
-                <button 
-                    class="team-btn ${disabled ? 'ghost' : ''}" 
-                    data-team-action="assign" 
-                    data-template-id="${mission.id}"
-                    ${disabled ? 'disabled' : ''}>
-                    ${isAlreadyActive ? 'Active' : 'Assign'}
-                </button>
+            `;
+        });
+        
+        html += `
+                </div>
             </div>
         `;
-    }).join('');
+    });
+    
+    library.innerHTML = html || '<p class="team-muted">No missions available.</p>';
 }
 
 function renderActiveTeamMissions(profile) {
@@ -570,7 +835,7 @@ async function assignTeamMission(profile, templateId) {
         throw new Error("Mission template not found.");
     }
     
-    // Fetch fresh missions from Firestore to check for duplicates (always check latest data)
+    // Fetch fresh missions from Firestore to check for duplicates and limits
     const currentMissions = await fetchTeamMissions(profile.teamId);
     const existingMission = currentMissions.find(m => 
         m.missionTemplateId === templateId && 
@@ -580,33 +845,77 @@ async function assignTeamMission(profile, templateId) {
         throw new Error(`Mission "${template.title}" is already active. Complete it first before assigning again.`);
     }
     
+    // Check total active missions limit
     if (currentMissions.length >= TEAM_LIMITS.maxActiveMissions) {
-        throw new Error("Maximum active missions reached.");
+        throw new Error(`Maximum active missions reached (${TEAM_LIMITS.maxActiveMissions}). Complete some missions first.`);
     }
+    
+    // Check difficulty-based limits
+    const missionsByDifficulty = currentMissions.filter(m => m.difficulty === template.difficulty);
+    const maxForDifficulty = TEAM_LIMITS.maxMissionsPerDifficulty[template.difficulty] || 999;
+    if (missionsByDifficulty.length >= maxForDifficulty) {
+        throw new Error(`You can only have ${maxForDifficulty} active ${template.difficulty} mission(s) at a time.`);
+    }
+    
+    // Check cooldown - prevent assigning same mission too soon after completion
+    const missionLogsRef = collection(db, "teams", profile.teamId, "missionLogs");
+    const logsQuery = query(missionLogsRef, where("missionId", "==", templateId), limit(1));
+    const logsSnapshot = await getDocs(logsQuery);
+    if (!logsSnapshot.empty) {
+        const lastLog = logsSnapshot.docs[0].data();
+        const lastCompleted = new Date(lastLog.completedAt);
+        const cooldownMs = (template.cooldownHours || 24) * 60 * 60 * 1000;
+        const timeSinceCompletion = Date.now() - lastCompleted.getTime();
+        if (timeSinceCompletion < cooldownMs) {
+            const hoursRemaining = Math.ceil((cooldownMs - timeSinceCompletion) / (60 * 60 * 1000));
+            throw new Error(`This mission is on cooldown. Try again in ${hoursRemaining} hour(s).`);
+        }
+    }
+    
+    // Check daily mission cap
     const todayKey = getTodayDateString();
     const teamDailyCount = currentTeamData?.dailyMissionCounter?.[todayKey] || 0;
     if (teamDailyCount >= TEAM_LIMITS.dailyMissionCap) {
-        throw new Error("Team reached today's mission limit. Try again tomorrow.");
+        throw new Error(`Team reached today's mission limit (${TEAM_LIMITS.dailyMissionCap}). Try again tomorrow.`);
     }
+    
+    // Calculate dynamic rewards based on team size and difficulty
+    const teamSize = currentTeamData?.members ? Object.keys(currentTeamData.members).length : 1;
+    const participationMultiplier = Math.min(
+        TEAM_REWARD_RULES.participationBonus.max,
+        TEAM_REWARD_RULES.participationBonus.min + 
+        ((teamSize / TEAM_REWARD_RULES.participationBonus.threshold) * 
+         (TEAM_REWARD_RULES.participationBonus.max - TEAM_REWARD_RULES.participationBonus.min))
+    );
+    const difficultyMultiplier = TEAM_REWARD_RULES.difficultyMultipliers[template.difficulty] || 1.0;
+    
+    const finalXpReward = Math.floor(template.xpReward * difficultyMultiplier * participationMultiplier);
+    const finalEcoReward = Math.floor(template.ecoReward * difficultyMultiplier * participationMultiplier);
+    
     await addDoc(collection(db, "teams", profile.teamId, "activeMissions"), {
         missionTemplateId: template.id,
         title: template.title,
         description: template.description,
         icon: template.icon,
         difficulty: template.difficulty,
-        xpReward: template.xpReward,
-        ecoReward: template.ecoReward,
+        xpReward: finalXpReward,
+        ecoReward: finalEcoReward,
+        baseXpReward: template.xpReward, // Store base for reference
+        baseEcoReward: template.ecoReward,
+        carbonReduction: template.carbonReduction || 0,
         requiredSubmissions: template.requiredSubmissions,
         status: "active",
         submissions: [],
+        progress: 0,
         startedBy: currentUser.uid,
-        startedAt: new Date().toISOString()
+        startedAt: new Date().toISOString(),
+        cooldownHours: template.cooldownHours || 24
     });
     await updateDoc(doc(db, "teams", profile.teamId), {
         activeMissionCount: increment(1)
     });
     await refreshTeamData(profile);
-    alert(`Mission "${template.title}" assigned to your team.`);
+    alert(`Mission "${template.title}" assigned to your team! Rewards: ${finalXpReward} XP, ${finalEcoReward} EcoPoints`);
 }
 
 async function submitTeamMissionProgress(profile, missionId, note) {
@@ -683,21 +992,44 @@ async function approveTeamMission(profile, missionId) {
     const mission = snapshot.data();
     const submissions = mission.submissions || [];
     if (submissions.length < TEAM_LIMITS.minUniqueSubmitters) {
-        throw new Error("Need more unique submissions before approval.");
+        throw new Error(`Need at least ${TEAM_LIMITS.minUniqueSubmitters} unique submissions before approval.`);
     }
-    const participants = submissions;
-    const xpPerUser = Math.max(10, Math.floor(mission.xpReward / participants.length));
-    const ecoPerUser = Math.max(5, Math.floor(mission.ecoReward / participants.length));
+    if (submissions.length < mission.requiredSubmissions) {
+        throw new Error(`Need ${mission.requiredSubmissions} submissions, but only ${submissions.length} provided.`);
+    }
     
+    const participants = submissions;
+    // Calculate rewards per user with minimum guarantees
+    const xpPerUser = Math.max(15, Math.floor(mission.xpReward / participants.length));
+    const ecoPerUser = Math.max(8, Math.floor(mission.ecoReward / participants.length));
+    
+    // Bonus for leader who approves (small incentive)
+    const approverBonus = profile.teamRole === 'leader' ? 1.1 : 1.0;
+    const approverXp = Math.floor(xpPerUser * approverBonus);
+    const approverEco = Math.floor(ecoPerUser * approverBonus);
+    
+    // Distribute rewards to all participants
     for (const participant of participants) {
         try {
             const profileResult = await getUserProfile(participant.userId);
             if (!profileResult.success) continue;
             const participantProfile = profileResult.data;
-            const newXP = (participantProfile.xp || 0) + xpPerUser;
+            
+            // Check if this is the approver
+            const isApprover = participant.userId === currentUser.uid;
+            const rewardXp = isApprover ? approverXp : xpPerUser;
+            const rewardEco = isApprover ? approverEco : ecoPerUser;
+            
+            const newXP = (participantProfile.xp || 0) + rewardXp;
             const newLevel = calculateLevel(newXP);
-            const newEco = (participantProfile.ecoPoints || 0) + ecoPerUser;
-            const teamStats = participantProfile.teamStats || { missionsCompleted: 0, xpEarned: 0, ecoEarned: 0, approvalsGiven: 0 };
+            const newEco = (participantProfile.ecoPoints || 0) + rewardEco;
+            const teamStats = participantProfile.teamStats || { 
+                missionsCompleted: 0, 
+                xpEarned: 0, 
+                ecoEarned: 0, 
+                approvalsGiven: 0 
+            };
+            
             await updateUserProfile(participant.userId, {
                 xp: newXP,
                 ecoPoints: newEco,
@@ -705,9 +1037,9 @@ async function approveTeamMission(profile, missionId) {
                 missionsCompleted: (participantProfile.missionsCompleted || 0) + 1,
                 teamStats: {
                     missionsCompleted: (teamStats.missionsCompleted || 0) + 1,
-                    xpEarned: (teamStats.xpEarned || 0) + xpPerUser,
-                    ecoEarned: (teamStats.ecoEarned || 0) + ecoPerUser,
-                    approvalsGiven: teamStats.approvalsGiven || 0
+                    xpEarned: (teamStats.xpEarned || 0) + rewardXp,
+                    ecoEarned: (teamStats.ecoEarned || 0) + rewardEco,
+                    approvalsGiven: isApprover ? (teamStats.approvalsGiven || 0) + 1 : (teamStats.approvalsGiven || 0)
                 }
             });
         } catch (error) {
@@ -715,21 +1047,46 @@ async function approveTeamMission(profile, missionId) {
         }
     }
     
+    // Update team stats
+    const totalXpRewarded = mission.xpReward || 0;
+    const totalEcoRewarded = mission.ecoReward || 0;
+    
     await updateDoc(doc(db, "teams", profile.teamId), {
         "stats.missionsCompleted": increment(1),
-        "stats.xpEarned": increment(mission.xpReward || 0),
-        "stats.ecoEarned": increment(mission.ecoReward || 0),
+        "stats.xpEarned": increment(totalXpRewarded),
+        "stats.ecoEarned": increment(totalEcoRewarded),
         "stats.approvals": increment(1),
         activeMissionCount: increment(-1),
         [`dailyMissionCounter.${getTodayDateString()}`]: increment(1),
         lastMissionCompletedAt: new Date().toISOString()
     });
     
+    // Log mission completion
+    try {
+        await addDoc(collection(db, "teams", profile.teamId, "missionLogs"), {
+            missionId: missionId,
+            missionTemplateId: mission.missionTemplateId,
+            title: mission.title,
+            difficulty: mission.difficulty,
+            completedAt: new Date().toISOString(),
+            rewardedXp: totalXpRewarded,
+            rewardedEco: totalEcoRewarded,
+            carbonReduction: mission.carbonReduction || 0,
+            participants: participants.map(p => ({ 
+                userId: p.userId, 
+                displayName: p.displayName || "Member" 
+            })),
+            approvedBy: currentUser.uid
+        });
+    } catch (error) {
+        console.warn("Unable to write team mission log:", error);
+    }
+    
     await deleteDoc(missionRef);
     activeTeamMissions = activeTeamMissions.filter(m => m.id !== missionId);
     await refreshTeamData(profile);
     renderActiveTeamMissions(profile);
-    alert(`Approved "${mission.title}". Rewards sent to teammates.`);
+    alert(`Approved "${mission.title}"! ${participants.length} teammates received rewards.`);
 }
 
 function openTeamManagerModal(mode) {

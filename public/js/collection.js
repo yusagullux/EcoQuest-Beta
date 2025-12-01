@@ -3,7 +3,7 @@ import { requireAuth } from "./auth-guard.js";
 import { logOut, getUserProfile, updateUserProfile } from "./auth.js";
 
 // ============================================
-// OLEKUHALDUS
+// STATE MANAGEMENT
 // ============================================
 
 const TOAST_DISPLAY_DURATION = 3000;
@@ -67,7 +67,7 @@ function renderCollection(plants) {
     
     if (!plantsGrid) return;
 
-    // Näitab tühja seisu, kui taimi pole
+    // Show empty state if no plants
     if (plants.length === 0) {
         plantsGrid.innerHTML = "";
         if (emptyCollection) {
@@ -80,10 +80,10 @@ function renderCollection(plants) {
         emptyCollection.style.display = "none";
     }
 
-    // Rühmitab taimed tüübi järgi
+    // Group plants by type
     const groupedPlants = groupPlantsByType(plants);
     
-    // Filtreerib harulduse järgi kui vaja
+    // Filter by rarity if needed
     let filteredPlants = groupedPlants;
     if (currentFilter !== "all") {
         filteredPlants = groupedPlants.filter(plant => plant.rarity === currentFilter);
@@ -140,7 +140,7 @@ function createCollectionCard(plantGroup) {
         </div>
     `;
 
-    // Lisab müüginupu sündmuse
+    // Add sell button event
     if (canSell) {
         const sellButton = card.querySelector(".sell-button");
         if (sellButton) {
@@ -170,7 +170,7 @@ function filterCollection(selectedRarity) {
 }
 
 // ============================================
-// ÄRILOOGIKA
+// BUSINESS LOGIC
 // ============================================
 
 async function loadUserData() {
@@ -249,14 +249,14 @@ async function handleSellPlant(plantGroupData, sellPriceAmount) {
 // ============================================
 
 function initializeCollection() {
-    // Filtri nupud
+    // Filter buttons
     document.querySelectorAll(".filter-btn").forEach(btn => {
         btn.addEventListener("click", () => {
             filterCollection(btn.dataset.rarity);
         });
     });
 
-    // Väljalogimise nupud
+    // Logout buttons
     const logoutButton = document.getElementById("logoutButton");
     const logoutButtonMobile = document.getElementById("logoutButtonMobile");
 
@@ -278,7 +278,7 @@ function initializeCollection() {
         });
     }
 
-    // Mobiilse menüü lüliti
+    // Mobile menu toggle
     const mobileMenuToggle = document.getElementById("mobileMenuToggle");
     const mobileMenu = document.getElementById("mobileMenu");
 
@@ -307,7 +307,7 @@ function initializeCollection() {
         });
     }
 
-    // Peidab laadimisoleku
+    // Hide loading state
     const loadingState = document.getElementById("loadingState");
     if (loadingState) {
         loadingState.style.display = "none";

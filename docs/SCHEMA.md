@@ -33,7 +33,7 @@ XP + EcoPoints + Carbon Reduction → Level Up Check → Badge Unlock
 **Verification Steps:**
 1. Check quest start time
 2. Verify minimum time passed
-3. Check daily limit (10 quests/day)
+3. Check daily limit (5 quests/day)
 4. Detect abnormal patterns
 5. Calculate rewards
 
@@ -508,5 +508,5 @@ Real-time Sync → Firebase Listener → Auto Update UI
 - Frontend: HTML/CSS/JS (Vanilla)
 - Backend: Firebase (Auth, Firestore)
 - Charts: Chart.js
-- Hosting: Firebase Hosting
+
 

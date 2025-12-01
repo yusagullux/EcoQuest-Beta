@@ -694,17 +694,17 @@
         let reflectionPendingIds = [];
         let currentProfileData = null;
         
-        // Privaatsete missioonide loend, mille puhul foto pole vajalik.
+        // List of private missions that don't require photos
         const QUESTS_WITHOUT_PHOTO = [
-            'water_1',      // Lülita hambapesul vesi kinni (vannituba, privaatne)
-            'water_2',      // Lühenda dušši aega kahe minuti võrra (dušš, privaatne)
-            'energy_5',     // Lülita ööseks elektroonika välja (öötegevus, privaatne)
-            'energy_3',     // Lae telefoni ainult vajadusel (isiklik seade, privaatne)
-            'sustainable_4' // Võta kasutud laadijad seinast (isiklikud seadmed, privaatne)
+            'water_1',      // Turn off water while brushing (bathroom, private)
+            'water_2',      // Reduce shower time by 2 minutes (shower, private)
+            'energy_5',     // Turn off electronics at night (night activity, private)
+            'energy_3',     // Charge phone only when needed (personal device, private)
+            'sustainable_4' // Unplug unused chargers (personal devices, private)
         ];
         let cachedQuestsDataForPhoto = null;
         
-        // Kontrollib esmalt käsitsi märgitud ID
+        // First check manually marked IDs
         async function questRequiresPhoto(questId) {
             const mappedQuest = QUEST_ID_MAPPING[questId];
             const jsonQuestIds = mappedQuest?.jsonIds || [];
@@ -2138,14 +2138,14 @@
                 const file = e.target.files[0];
                 if (!file) return;
                 
-            // Kontrollib faili tüüpi
+            // Check file type
                 if (!file.type.startsWith('image/')) {
                     alert('Please select an image file.');
                     photoInput.value = '';
                     return;
                 }
                 
-            // Kontrollib faili suurust (max 10MB)
+            // Check file size (max 10MB)
                 if (file.size > 10 * 1024 * 1024) {
                     alert('Image is too large. Please select an image smaller than 10MB.');
                     photoInput.value = '';
@@ -2251,7 +2251,7 @@
         }
         
         
-        // Kontrollib, et vajalikud fotod on olemas ja käivitab lõpuprotsessi.
+        // Check that required photos are present and start the completion process.
         async function completeAllQuestsWithPhotos() {
             const modal = document.getElementById('photoUploadModal');
             const completionData = pendingQuestCompletion?.completionData;
@@ -2290,7 +2290,7 @@
             }
         }
         
-        // Liidab XP, uuendab profiili ja väldib duplikaatseid missioone.
+        // Adds XP, updates profile and prevents duplicate missions.
         async function completeQuestsWithPhoto(questIds, completionData, questPhotoMap, questReflections = {}) {
             const { currentUser, profile, quests, checkboxes } = completionData;
             
@@ -2512,16 +2512,16 @@
                 
                 const warnings = [];
                 
-                // Kontrollib vaid päevalimiiti (5 missiooni päevas) – muud kinnitust pole vaja
+                // Check only daily limit (5 missions per day) - no other verification needed
                 const today = getTodayDateString();
                 const dailyCompletions = profile.dailyQuestCompletions || {};
                 const todayCompletions = Array.isArray(dailyCompletions[today]) 
-                    ? [...new Set(dailyCompletions[today])] // Unikaalsed missioonid
+                    ? [...new Set(dailyCompletions[today])] // Unique missions
                     : [];
                 const uniqueQuestIds = [...new Set(questIds)];
                 const newTotal = todayCompletions.length + uniqueQuestIds.length;
                 
-                const MAX_DAILY_QUESTS = 5; // Maksimaalselt 5 missiooni päevas
+                const MAX_DAILY_QUESTS = 5; // Maximum 5 missions per day
                 if (newTotal > MAX_DAILY_QUESTS) {
                     warnings.push({
                         type: "daily_limit",
@@ -2750,7 +2750,7 @@
                 missionItem.appendChild(questContent);
                 missionList.appendChild(missionItem);
                 
-                // Missioonide alguse jälgimine on väljas – lisakinnitust pole
+                // Quest start tracking is disabled - no additional verification needed
             });
 
             const completeButton = document.createElement("button");
@@ -2779,7 +2779,7 @@
                     return;
                 }
                 
-                // Kontrollib valitud missioonide arvu
+                // Check number of selected missions
                 if (checkboxes.length > 10) {
                     alert("You can only complete up to 10 quests at once.");
                     return;
@@ -2801,7 +2801,7 @@
                         throw new Error("Invalid profile data");
                     }
                     
-                    // Kontrollib vaid päevalimiiti (5 missiooni päevas) – muud kinnitust pole vaja
+                    // Check only daily limit (5 missions per day) - no other verification needed
                     const selectedQuestIds = [];
                     checkboxes.forEach(checkbox => {
                         if (!checkbox) return;
@@ -2837,7 +2837,7 @@
                     }
                     }
                     
-                    // Jaotab missioonid fotoga ja fotota gruppidesse
+                    // Split missions into groups with and without photos
                     const photoChecks = await Promise.all(
                         uniqueQuestIds.map(async questId => ({
                             questId,
@@ -2855,7 +2855,7 @@
                         completeButton: completeButton
                     };
                     
-                    // Täidab foto nõudeta missioonid otse
+                    // Complete missions without photo requirements directly
                     if (questsWithoutPhoto.length > 0) {
                         const reflectionsProvided = await ensureReflectionNotes(questsWithoutPhoto);
                         if (!reflectionsProvided) {
@@ -3189,7 +3189,7 @@
             }
         }
 
-        // Näitab spetsiaalset kaarti, kui kasutaja on kõik missioonid lõpetanud.
+        // Shows special card when user has completed all quests.
         async function showAllQuestsCompletedInfoCard(user = null) {
             if (document.getElementById('allQuestsCompletedCard')) {
                 return;
@@ -4089,7 +4089,7 @@
                 let errorMessage = "Error loading data. ";
                 let userFriendlyMessage = "";
                 
-                // Kontrollib konkreetseid veatüüpe
+                // Check specific error types
                 if (error.code === 'permission-denied') {
                     userFriendlyMessage = "Permission denied. Please check Firebase Firestore rules.";
                 } else if (error.code === 'unavailable') {

@@ -1,4 +1,7 @@
-// Autentimise vahik – suunab loginni kui kasutaja pole tuvastatud
+/**
+ * Authentication guard
+ * Automatically redirects to login page if user is not authenticated
+ */
 import { onAuthChange } from "./auth.js";
 
 export function requireAuth() {
@@ -7,7 +10,7 @@ export function requireAuth() {
       if (user) {
         resolve(user);
       } else {
-        // Suunab kasutaja sisselogimise lehele
+        // Redirect to login page if user is not authenticated
         window.location.href = "login.html";
         reject(new Error("User not authenticated"));
       }

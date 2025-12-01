@@ -23,8 +23,9 @@ if (typeof window !== 'undefined') {
 
 const auth = getAuth(app);
 
-// Määrab püsivuse LOCAL peale, et kasutaja jääks sisse ka brauseri sulgemisel
-// Kasutaja logitakse välja ainult siis, kui ta vajutab "Sign Out"
+// Set authentication persistence to LOCAL
+// User stays logged in even after closing the browser
+// User is only logged out when clicking "Sign Out" button
 if (typeof window !== 'undefined') {
   setPersistence(auth, browserLocalPersistence).catch((error) => {
     console.error("Error setting auth persistence:", error);
