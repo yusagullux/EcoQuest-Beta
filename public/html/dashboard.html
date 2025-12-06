@@ -120,7 +120,7 @@
 
     </main>
 
-    <!-- Photo Upload Modal -->
+    <!-- Photo Lisamine(Pilti ei salvestata)-->
     <div id="photoUploadModal" class="photo-modal" style="display: none;">
         <div class="photo-modal-content">
             <div class="photo-modal-header">
@@ -152,7 +152,7 @@
         </div>
     </div>
 
-    <!-- Team Management Modal -->
+    <!-- Team Admin -->
     <div id="teamManagerModal" class="team-modal" style="display: none;">
         <div class="team-modal-content">
             <div class="team-modal-header">
@@ -170,7 +170,7 @@
         </div>
     </div>
 
-    <!-- Team Mission Submission Modal -->
+    <!-- Team Mission Submit -->
     <div id="teamSubmissionModal" class="team-modal" style="display: none;">
         <div class="team-modal-content">
             <div class="team-modal-header">
@@ -188,7 +188,7 @@
         </div>
     </div>
 
-    <!-- Reflection Modal -->
+    <!-- Peegeldamine -->
     <div id="reflectionModal" class="team-modal" style="display: none;">
         <div class="team-modal-content">
             <div class="team-modal-header">
@@ -230,41 +230,46 @@
         import { db } from "../js/firebase-config.js";
         function getBadgeImageForLevel(level) {
             const badgeImages = {
-                1: "../images/ecoquests-badges/cat-badge-removedbg.png",
-                2: "../images/ecoquests-badges/fox-badge-removedbg.png",
-                3: "../images/ecoquests-badges/rabbit-badge-removedbg.png",
-                4: "../images/ecoquests-badges/deer-badge-removedbg.png",
-                5: "../images/ecoquests-badges/wolf-badge-removedbg.png",
-                6: "../images/ecoquests-badges/bear-badge-removedbg.png",
-                7: "../images/ecoquests-badges/eagle-badge-removedbg.png",
-                8: "../images/ecoquests-badges/tiger-badge-removedbg.png",
-                9: "../images/ecoquests-badges/lion-badge-removedbg.png"
+                1: "../images/ecoquests-badges/cat-badge-removedbg.png", // Level 1 Helkuri Pilt
+                2: "../images/ecoquests-badges/fox-badge-removedbg.png", // Level 2 Helkuri Pilt
+                3: "../images/ecoquests-badges/rabbit-badge-removedbg.png", // Level 3 Helkuri Pilt
+                4: "../images/ecoquests-badges/deer-badge-removedbg.png", // Level 4 Helkuri Pilt
+                5: "../images/ecoquests-badges/wolf-badge-removedbg.png", // Level 5 Helkuri Pilt
+                6: "../images/ecoquests-badges/bear-badge-removedbg.png", // Level 6 Helkuri Pilt
+                7: "../images/ecoquests-badges/eagle-badge-removedbg.png", // Level 7 Helkuri Pilt
+                8: "../images/ecoquests-badges/tiger-badge-removedbg.png", // Level 8 Helkuri Pilt
+                9: "../images/ecoquests-badges/lion-badge-removedbg.png" // Level 9 Helkuri Pilt
             };
             return badgeImages[level] || badgeImages[1];
         }
 
         function getBadgeNameForLevel(level) {
             const badgeNames = {
-                1: "Cat",
-                2: "Fox",
-                3: "Rabbit",
-                4: "Deer",
-                5: "Wolf",
-                6: "Bear",
-                7: "Eagle",
-                8: "Tiger",
-                9: "Lion"
+                1: "Cat", // Level 1 Badge Name
+                2: "Fox", // Level 2 Badge Name
+                3: "Rabbit", // Level 3 Badge Name
+                4: "Deer", // Level 4 Badge Name
+                5: "Wolf", // Level 5 Badge Name
+                6: "Bear", // Level 6 Badge Name
+                7: "Eagle", // Level 7 Badge Name
+                8: "Tiger", // Level 8 Badge Name
+                9: "Lion" // Level 9 Badge Name
             };
             return badgeNames[level] || badgeNames[1];
         }
 
+        // Helkuri kuvamise funktsioon, kontrollib taseme põhjal õige pildi ja näitab seda
         function displayBadge(badgeElement, level, animate = false) {
+            // kontrollib, et level oleks kehtiv (1-9), muidu võib tekkida bug
             const badgeImage = getBadgeImageForLevel(level);
             const badgeName = getBadgeNameForLevel(level);
             
+            // eemaldab eelneva animatsiooni, et vältida konflikte
             badgeElement.classList.remove('badge-unlock');
+            // tühjendab elemendi, et vältida topeltkuvamist
             badgeElement.innerHTML = '';
             
+            // loob uue pildi elemendi ja määrab selle atribuudid
             const img = document.createElement('img');
             img.src = badgeImage;
             img.alt = `${badgeName} Badge`;
@@ -274,8 +279,9 @@
             badgeElement.appendChild(img);
             badgeElement.title = `${badgeName} Badge`;
             
+            // animatsioon uue helkuri avamisel, void offsetWidth sunnib brauserit uuesti renderdama
             if (animate) {
-                void badgeElement.offsetWidth;
+                void badgeElement.offsetWidth; // tagab, et animatsioon töötab korrektselt
                 badgeElement.classList.add('badge-unlock');
                 setTimeout(() => {
                     badgeElement.classList.remove('badge-unlock');
@@ -283,21 +289,23 @@
             }
         }
 
+        // meeskonna piirangud, need väärtused peavad olema kontrollitud enne misjonide lisamist
         const TEAM_LIMITS = {
-            maxMembers: 8,
-            maxActiveMissions: 3,
-            dailyMissionCap: 5,
-            memberSubmissionCooldownMinutes: 60,
-            minUniqueSubmitters: 2,
-            requiredApprovals: 1
+            maxMembers: 8, // maksimaalne liikmete arv meeskonnas
+            maxActiveMissions: 3, // maksimaalne aktiivsete missioonide arv korraga
+            dailyMissionCap: 5, // maksimaalne missioonide arv päevas
+            memberSubmissionCooldownMinutes: 60, // cooldown aeg sekundites enne järgmist esitust
+            minUniqueSubmitters: 2, // minimaalne erinevate esitajate arv enne kinnitamist
+            requiredApprovals: 1 // vajalik kinnituste arv
         };
 
         const TEAM_REWARD_RULES = {
-            ecoRatio: 0.6,
-            streakBonusPercent: 10,
-            minReflectionLength: 20
+            ecoRatio: 0.6, 
+            streakBonusPercent: 10, // Streak Bonus Protsent
+            minReflectionLength: 20 
         };
 
+        // Team Missionide Loetelu
         const TEAM_MISSION_LIBRARY = [
             {
                 id: "team_recycle_15",
@@ -379,6 +387,7 @@
             cooldown: (missionTitle) => `Cooldown active for "${missionTitle}". Try a different mission for now.`
         };
 
+        // Helkuri Näitamise Funktsioon 2
         function displayBadgeShowcase(level, animate = false) {
             const badgeImage = getBadgeImageForLevel(level);
             const badgeName = getBadgeNameForLevel(level);
@@ -409,6 +418,7 @@
             }
         }
 
+        // Uue Badge(Helkuri) Avamise Funktsioon
         async function checkAndUnlockBadge(user, oldLevel, newLevel) {
             if (newLevel > oldLevel && newLevel <= 9) {
                 const profileResult = await getUserProfile(user.uid);
@@ -458,15 +468,15 @@
         }
 
         const LEVEL_MILESTONES = [
-            0,
-            100,
-            250,
-            500,
-            1000,
-            2500,
-            5000,
-            10000,
-            50000
+            0, // Level 1
+            100, // Level 2
+            250, // Level 3
+            500, // Level 4
+            1000, // Level 5
+            2500, // Level 6
+            5000, // Level 7
+            10000, // Level 8
+            50000 // Level 9
         ];
 
         function getXPRequiredForLevel(level) {
@@ -482,13 +492,16 @@
             return LEVEL_MILESTONES[level - 1];
         }
 
+        // arvutab taseme XP põhjal, tagab et tase on alati 1-9 vahemikus
         function calculateLevel(xp) {
+            // kui xp on negatiivne, tagastab 1
+            if (xp < 0) return 1;
             for (let i = LEVEL_MILESTONES.length - 1; i >= 0; i--) {
                 if (xp >= LEVEL_MILESTONES[i]) {
                     return i + 1;
                 }
             }
-            return 1;
+            return 1; // vaikimisi tase 1, kui XP on väga väike
         }
 
         function getXPForNextLevel(xp, currentLevel) {
@@ -510,9 +523,17 @@
             };
         }
 
+        // arvutab EcoPoints XP ja taseme põhjal, kontrollib et tulemused oleksid alati positiivsed
         function calculateEcoPoints(xp, level, badgesCount = 0) {
+            // kontrollib, et sisendid oleksid kehtivad
+            if (xp < 0 || level < 1 || badgesCount < 0) {
+                console.warn("Invalid input for calculateEcoPoints:", { xp, level, badgesCount });
+                return 0;
+            }
+            
             let basePoints = 0;
             
+            // mida kõrgem tase, seda vähem EcoPoints XP kohta
             if (level <= 3) {
                 basePoints = Math.floor(xp / 10);
             } else if (level <= 5) {
@@ -523,9 +544,10 @@
                 basePoints = Math.floor(xp / 50);
             }
             
+            // helkuri boonus, iga helkuri eest +10 punkti
             const badgeBonus = badgesCount * 10;
             
-            return basePoints + badgeBonus;
+            return Math.max(0, basePoints + badgeBonus); // tagab, et tulemus on alati positiivne
         }
 
         function getTodayDateString() {
@@ -539,23 +561,28 @@
 
         function getTimeUntilNextReset(lastResetTime) {
             const now = new Date().getTime();
-            const lastReset = new Date(lastResetTime).getTime();
-            const twentyFourHours = 24 * 60 * 60 * 1000;
-            const nextReset = lastReset + twentyFourHours;
-            const timeRemaining = nextReset - now;
+            const lastResetTimestamp = new Date(lastResetTime).getTime();
+            const hoursInMilliseconds = 24 * 60 * 60 * 1000;
+            const nextResetTimestamp = lastResetTimestamp + hoursInMilliseconds;
+            const timeRemaining = nextResetTimestamp - now;
             
             return Math.max(0, timeRemaining);
         }
 
-        function formatTimeRemaining(ms) {
-            if (ms <= 0) return "00:00:00";
+        function formatTimeRemaining(milliseconds) {
+            if (milliseconds <= 0) return "00:00:00";
             
-            const totalSeconds = Math.floor(ms / 1000);
-            const hours = Math.floor(totalSeconds / 3600);
-            const minutes = Math.floor((totalSeconds % 3600) / 60);
-            const seconds = totalSeconds % 60;
+            const secondsInMillisecond = 1000;
+            const minutesInSecond = 60;
+            const hoursInMinute = 60;
             
-            return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            const totalSeconds = Math.floor(milliseconds / secondsInMillisecond);
+            const hours = Math.floor(totalSeconds / (hoursInMinute * minutesInSecond));
+            const minutes = Math.floor((totalSeconds % (hoursInMinute * minutesInSecond)) / minutesInSecond);
+            const seconds = totalSeconds % minutesInSecond;
+            
+            const formatNumber = (num) => String(num).padStart(2, '0');
+            return `${formatNumber(hours)}:${formatNumber(minutes)}:${formatNumber(seconds)}`;
         }
 
         function shouldResetQuests(lastResetTime) {
@@ -618,16 +645,20 @@
             }
         }
 
+        // laadib missioonide loendi, tagab et vead ei katkesta rakendust
         async function loadQuests() {
             try {
                 const response = await fetch('../quests.md');
+                // kontrollib HTTP staatust enne teksti lugemist
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const text = await response.text();
                 const quests = parseQuests(text);
-                return quests;
+                // tagab, et tagastatakse alati massiiv, isegi kui parsing ebaõnnestub
+                return Array.isArray(quests) ? quests : [];
             } catch (error) {
+                // logib vea, aga ei katkesta rakendust, tagastab tühja massiivi
                 console.error("Error loading quests:", error);
                 return [];
             }
@@ -680,10 +711,14 @@
             return quests;
         }
 
-        function getQuestBonusMultiplier(completionCount) {
-            if (completionCount <= 0) return 1.0;
-            const bonus = 1 + (completionCount * 0.2);
-            return Math.min(bonus, 3.0);
+        function getQuestBonusMultiplier(timesCompleted) {
+            const BASE_MULTIPLIER = 1.0;
+            const BONUS_PER_COMPLETION = 0.2;
+            const MAX_MULTIPLIER = 3.0;
+            
+            if (timesCompleted <= 0) return BASE_MULTIPLIER;
+            const calculatedBonus = BASE_MULTIPLIER + (timesCompleted * BONUS_PER_COMPLETION);
+            return Math.min(calculatedBonus, MAX_MULTIPLIER);
         }
 
         let pendingQuestCompletion = null;
@@ -694,13 +729,13 @@
         let reflectionPendingIds = [];
         let currentProfileData = null;
         
-        // List of private missions that don't require photos
+        // Privaatsete Questide Loetelu(privaatne)
         const QUESTS_WITHOUT_PHOTO = [
-            'water_1',      // Turn off water while brushing (bathroom, private)
-            'water_2',      // Reduce shower time by 2 minutes (shower, private)
-            'energy_5',     // Turn off electronics at night (night activity, private)
-            'energy_3',     // Charge phone only when needed (personal device, private)
-            'sustainable_4' // Unplug unused chargers (personal devices, private)
+            'water_1',      // Turn off water while brushing (privaatne)
+            'water_2',      // Reduce shower time by 2 minutes (privaatne)
+            'energy_5',     // Turn off electronics at night (privaatne)
+            'energy_3',     // Charge phone only when needed (privaatne)
+            'sustainable_4' // Unplug unused chargers (privaatne)
         ];
         let cachedQuestsDataForPhoto = null;
         
@@ -2251,7 +2286,7 @@
         }
         
         
-        // Check that required photos are present and start the completion process.
+        // kontrollib, et kõik vajalikud fotod on olemas ja alustab missioonide lõpetamise protsessi
         async function completeAllQuestsWithPhotos() {
             const modal = document.getElementById('photoUploadModal');
             const completionData = pendingQuestCompletion?.completionData;
@@ -2262,14 +2297,16 @@
                 modal.style.display = 'none';
             }
             
-            
+            // kontrollib, et kõik vajalikud andmed on olemas
             if (!completionData || questIds.length === 0) {
                 console.error('Missing completion data or quest IDs');
                 alert('Error: Missing quest completion data. Please try again.');
+                // taastab nupu oleku, et kasutaja saaks uuesti proovida
                 if (completionData?.completeButton) {
                     completionData.completeButton.disabled = false;
                     completionData.completeButton.textContent = "Complete Selected Missions";
                 }
+                // puhastab oleku
                 pendingQuestCompletion = null;
                 verifiedPhotos = {};
                 return;
@@ -2290,46 +2327,56 @@
             }
         }
         
-        // Adds XP, updates profile and prevents duplicate missions.
+        // lisab XP, uuendab profiili ja vältib topeltmissioonide lõpetamist
         async function completeQuestsWithPhoto(questIds, completionData, questPhotoMap, questReflections = {}) {
             const { currentUser, profile, quests, checkboxes } = completionData;
             
             try {
+                // kontrollib, et profiil on olemas
+                if (!profile || !currentUser) {
+                    throw new Error("Missing user or profile data");
+                }
+                
                 const currentQuestCompletionCount = profile.questCompletionCount || {};
                 const allQuestsCompleted = profile.allQuestsCompleted || false;
+            
+                let totalXpEarned = 0;
+                const xpRewardsByQuest = {};
+                const validQuestIds = [];
                 
-                let totalXP = 0;
-                const questXpMap = {};
-                const completedQuestIdsToAdd = [];
-                
+                // kontrollib iga missiooni kehtivust ja fotode olemasolu
                 for (const questId of questIds) {
                     const quest = quests.find(q => q.id === questId);
                     if (!quest) {
                         continue;
                     }
                     
-                    const requiresPhoto = await questRequiresPhoto(questId);
+                    const needsPhoto = await questRequiresPhoto(questId);
                     
-                    if (requiresPhoto && !questPhotoMap[questId]) {
+                    // kontrollib, et fotoga missioonidel on foto olemas
+                    if (needsPhoto && !questPhotoMap[questId]) {
                         continue;
                     }
                     
-                    const baseXP = Number(quest.xp) || 0;
-                    if (baseXP < 0) continue;
+                    // kontrollib, et XP on positiivne arv
+                    const baseXpReward = Number(quest.xp) || 0;
+                    if (baseXpReward < 0) continue;
                     
-                    const completionCount = Number(currentQuestCompletionCount[questId]) || 0;
-                    const bonusMultiplier = getQuestBonusMultiplier(completionCount);
-                    const bonusXP = Math.floor(baseXP * bonusMultiplier);
+                    const timesCompleted = Number(currentQuestCompletionCount[questId]) || 0;
+                    const bonusMultiplier = getQuestBonusMultiplier(timesCompleted);
+                    const finalXpReward = Math.floor(baseXpReward * bonusMultiplier);
                     
-                    if (isNaN(bonusXP) || bonusXP < 0) continue;
+                    // kontrollib, et arvutused on kehtivad
+                    if (isNaN(finalXpReward) || finalXpReward < 0) continue;
                     
-                    totalXP += bonusXP;
-                    questXpMap[questId] = bonusXP;
-                    completedQuestIdsToAdd.push(questId);
-                    currentQuestCompletionCount[questId] = completionCount + 1;
+                    totalXpEarned += finalXpReward;
+                    xpRewardsByQuest[questId] = finalXpReward;
+                    validQuestIds.push(questId);
+                    currentQuestCompletionCount[questId] = timesCompleted + 1;
                 }
                 
-                if (completedQuestIdsToAdd.length === 0) {
+                // kontrollib, et vähemalt üks missioon on kehtiv
+                if (validQuestIds.length === 0) {
                     console.error("No valid quests to complete", {
                         questIds: questIds,
                         questPhotoMap: questPhotoMap,
@@ -2339,62 +2386,66 @@
                     throw new Error("No valid quests to complete. Please make sure you took photos for all selected quests.");
                 }
                 
-                const uniqueCompletedQuestIds = [...new Set(completedQuestIdsToAdd)];
+                const uniqueCompletedQuestIds = [...new Set(validQuestIds)];
                 
-                // Arvutab XP, taseme ja ökoloogilised punktid
-                const currentXP = profile.xp || 0;
-                const currentEcoPoints = profile.ecoPoints || 0;
-                const currentMissions = profile.missionsCompleted || 0;
-                const currentLevel = profile.level || calculateLevel(currentXP);
-                const currentCompletedQuests = profile.completedQuests || [];
-                const dailyQuestsCompleted = profile.dailyQuestsCompleted || [];
-                const badgesCount = (profile.badges || []).length;
+                // arvutab XP, taseme ja ökoloogilised punktid
+                const userCurrentXp = profile.xp || 0;
+                const userCurrentEcoPoints = profile.ecoPoints || 0;
+                const userCurrentMissions = profile.missionsCompleted || 0;
+                const userCurrentLevel = profile.level || calculateLevel(userCurrentXp);
+                const userCompletedQuests = profile.completedQuests || [];
+                const userDailyCompletedQuests = profile.dailyQuestsCompleted || [];
+                const userBadgesCount = (profile.badges || []).length;
                 
-                const newXP = currentXP + totalXP;
-                const newLevel = calculateLevel(newXP);
+                const userNewXp = userCurrentXp + totalXpEarned;
+                const userNewLevel = calculateLevel(userNewXp);
                 
-                const expectedEcoPointsAtNewLevel = calculateEcoPoints(newXP, newLevel, badgesCount);
-                const expectedEcoPointsAtCurrentLevel = calculateEcoPoints(currentXP, currentLevel, badgesCount);
+                const ecoPointsAtNewLevel = calculateEcoPoints(userNewXp, userNewLevel, userBadgesCount);
+                const ecoPointsAtCurrentLevel = calculateEcoPoints(userCurrentXp, userCurrentLevel, userBadgesCount);
                 
-                let earnedEcoPoints = expectedEcoPointsAtNewLevel - expectedEcoPointsAtCurrentLevel;
+                let baseEcoPointsEarned = ecoPointsAtNewLevel - ecoPointsAtCurrentLevel;
                 
-                let bonusEcoPoints = 0;
+                let replayBonusEcoPoints = 0;
                 if (allQuestsCompleted) {
                     uniqueCompletedQuestIds.forEach(questId => {
-                        const completionCount = currentQuestCompletionCount[questId] || 0;
-                        if (completionCount > 0) {
-                            const questBonus = Math.min(completionCount * 0.1, 0.5);
+                        const timesCompleted = currentQuestCompletionCount[questId] || 0;
+                        if (timesCompleted > 0) {
+                            const replayBonusMultiplier = Math.min(timesCompleted * 0.1, 0.5);
                             const quest = quests.find(q => q.id === questId);
                             const questBaseEcoPoints = (quest?.xp || 0) * 0.1;
-                            bonusEcoPoints += Math.floor(questBaseEcoPoints * questBonus);
+                            replayBonusEcoPoints += Math.floor(questBaseEcoPoints * replayBonusMultiplier);
                         }
                     });
                 }
                 
-                const newEcoPoints = currentEcoPoints + earnedEcoPoints + bonusEcoPoints;
-                const newMissions = currentMissions + uniqueCompletedQuestIds.length;
-                const updatedCompletedQuests = Array.isArray(currentCompletedQuests) 
-                    ? [...new Set([...currentCompletedQuests, ...uniqueCompletedQuestIds])]
+                const userNewEcoPoints = userCurrentEcoPoints + baseEcoPointsEarned + replayBonusEcoPoints;
+                const userNewMissions = userCurrentMissions + uniqueCompletedQuestIds.length;
+                const updatedCompletedQuests = Array.isArray(userCompletedQuests) 
+                    ? [...new Set([...userCompletedQuests, ...uniqueCompletedQuestIds])]
                     : uniqueCompletedQuestIds;
-                const updatedDailyCompleted = Array.isArray(dailyQuestsCompleted)
-                    ? [...new Set([...dailyQuestsCompleted, ...uniqueCompletedQuestIds])]
+                const updatedDailyCompleted = Array.isArray(userDailyCompletedQuests)
+                    ? [...new Set([...userDailyCompletedQuests, ...uniqueCompletedQuestIds])]
                     : uniqueCompletedQuestIds;
                 
-                const allQuestsCheck = await checkAllQuestsCompleted(updatedCompletedQuests);
-                const shouldMarkAllCompleted = allQuestsCheck.allCompleted && !allQuestsCompleted;
+                const completionStatus = await checkAllQuestsCompleted(updatedCompletedQuests);
+                const isFirstTimeCompletingAll = completionStatus.allCompleted && !allQuestsCompleted;
                 
                 const currentAllQuestsCompletedCount = profile.allQuestsCompletedCount || 0;
                 let newAllQuestsCompletedCount = currentAllQuestsCompletedCount;
                 
-                const allDailyQuestsCompleted = updatedDailyCompleted.length >= quests.length && quests.length > 0;
-                const previousAllDailyQuestsCompleted = dailyQuestsCompleted.length >= quests.length && quests.length > 0;
+                const completedAllDailyQuests = updatedDailyCompleted.length >= quests.length && quests.length > 0;
+                const hadCompletedAllDailyQuests = userDailyCompletedQuests.length >= quests.length && quests.length > 0;
                 
-                if (allQuestsCompleted && allDailyQuestsCompleted && !previousAllDailyQuestsCompleted) {
+                if (allQuestsCompleted && completedAllDailyQuests && !hadCompletedAllDailyQuests) {
                     newAllQuestsCompletedCount = currentAllQuestsCompletedCount + 1;
                 }
                 
-                if (shouldMarkAllCompleted) {
+                if (isFirstTimeCompletingAll) {
                     newAllQuestsCompletedCount = 1;
+                    // esimene kord kui kõik questi on tehtud - näitab erilist animatsiooni
+                    setTimeout(() => {
+                        showReplayModeUnlockAnimation();
+                    }, 500);
                 }
                 
                 const today = getTodayDateString();
@@ -2408,40 +2459,41 @@
                 dailyCompletions[today] = [...new Set([...todayCompletions, ...uniqueCompletedQuestIds])];
                 
                 const updateResult = await updateUserProfile(currentUser.uid, {
-                    xp: newXP,
-                    ecoPoints: newEcoPoints,
-                    missionsCompleted: newMissions,
-                    level: newLevel,
+                    xp: userNewXp,
+                    ecoPoints: userNewEcoPoints,
+                    missionsCompleted: userNewMissions,
+                    level: userNewLevel,
                     completedQuests: updatedCompletedQuests,
                     dailyQuestsCompleted: updatedDailyCompleted,
                     questCompletionCount: currentQuestCompletionCount,
-                    allQuestsCompleted: shouldMarkAllCompleted || allQuestsCompleted,
+                    allQuestsCompleted: isFirstTimeCompletingAll || allQuestsCompleted,
                     allQuestsCompletedCount: newAllQuestsCompletedCount,
                     lastQuestCompletionTime: new Date().toISOString(),
                     dailyQuestCompletions: dailyCompletions
                 });
                 
                 if (updateResult.success) {
-                    const progress = getXPProgress(newXP, newLevel);
-                    const ecoPointsEarned = newEcoPoints - currentEcoPoints;
-                    const levelUp = newLevel > currentLevel;
+                    const xpProgress = getXPProgress(userNewXp, userNewLevel);
+                    const totalEcoPointsEarned = userNewEcoPoints - userCurrentEcoPoints;
+                    const didLevelUp = userNewLevel > userCurrentLevel;
                     
-                    await updateUI(newXP, newLevel, newMissions, newEcoPoints, currentUser, currentLevel, updatedCompletedQuests);
+                    await updateUI(userNewXp, userNewLevel, userNewMissions, userNewEcoPoints, currentUser, userCurrentLevel, updatedCompletedQuests);
                     await updateQuestCharts(updatedCompletedQuests);
                     
                     await calculateAndUpdateBestRank(currentUser.uid);
                     
-                    const bonusInfo = allQuestsCompleted && uniqueCompletedQuestIds.some(id => {
+                    const hasReplayBonus = allQuestsCompleted && uniqueCompletedQuestIds.some(id => {
                         const count = currentQuestCompletionCount[id] || 0;
                         return count > 0;
-                    }) ? " (with bonus)" : "";
+                    });
+                    const bonusText = hasReplayBonus ? " (with bonus)" : "";
                     
                     let successMessage = `Completed ${uniqueCompletedQuestIds.length} mission(s)!`;
-                    successMessage += `\n✨ +${totalXP} XP${bonusInfo}`;
-                    successMessage += `\n💰 +${ecoPointsEarned} EcoPoints`;
+                    successMessage += `\n✨ +${totalXpEarned} XP${bonusText}`;
+                    successMessage += `\n💰 +${totalEcoPointsEarned} EcoPoints`;
                     
-                    if (levelUp) {
-                        successMessage += `\n🎉 ${getBadgeNameForLevel(newLevel)} Badge Unlocked!`;
+                    if (didLevelUp) {
+                        successMessage += `\n🎉 ${getBadgeNameForLevel(userNewLevel)} Badge Unlocked!`;
                     }
                     
                     showSuccessAnimation(successMessage, 4000);
@@ -2451,26 +2503,26 @@
                         questId: questId,
                         questTitle: getQuestTitleById(questId),
                         reflection: questReflections[questId] || null,
-                        xpEarned: questXpMap[questId] || 0,
+                        xpEarned: xpRewardsByQuest[questId] || 0,
                         ecoEarned: uniqueCompletedQuestIds.length > 0 
-                            ? Math.max(0, Math.round(ecoPointsEarned / uniqueCompletedQuestIds.length))
+                            ? Math.max(0, Math.round(totalEcoPointsEarned / uniqueCompletedQuestIds.length))
                             : 0,
                         type: "solo"
                     })));
                     
                     setTimeout(() => {
                         let alertMessage = `Great job! You completed ${uniqueCompletedQuestIds.length} mission(s)!\n\n`;
-                        alertMessage += `✨ Earned: ${totalXP} XP${bonusInfo}\n`;
-                        alertMessage += `💰 Earned: ${ecoPointsEarned} EcoPoints\n`;
+                        alertMessage += `✨ Earned: ${totalXpEarned} XP${bonusText}\n`;
+                        alertMessage += `💰 Earned: ${totalEcoPointsEarned} EcoPoints\n`;
                         alertMessage += `📸 Photo proof verified!\n\n`;
-                        alertMessage += `Level ${newLevel} - ${progress.current} / ${progress.required} XP to next level`;
+                        alertMessage += `Level ${userNewLevel} - ${xpProgress.current} / ${xpProgress.required} XP to next level`;
                         
-                        if (levelUp) {
-                            alertMessage += `\n\n🎉 New Badge Unlocked: ${getBadgeNameForLevel(newLevel)} Badge!`;
+                        if (didLevelUp) {
+                            alertMessage += `\n\n🎉 New Badge Unlocked: ${getBadgeNameForLevel(userNewLevel)} Badge!`;
                         }
                         
-                        if (!allQuestsCheck.allCompleted && allQuestsCheck.totalQuests > 0) {
-                            alertMessage += `\n\n📊 Quest Progress: ${allQuestsCheck.completedCount} / ${allQuestsCheck.totalQuests} quests completed`;
+                        if (!completionStatus.allCompleted && completionStatus.totalQuests > 0) {
+                            alertMessage += `\n\n📊 Quest Progress: ${completionStatus.completedCount} / ${completionStatus.totalQuests} quests completed`;
                         } else if (allQuestsCompleted) {
                             alertMessage += `\n\n🔄 Replay Mode: Repeat quests to earn even more rewards!`;
                         }
@@ -2500,28 +2552,36 @@
             }
         }
 
+        // tuvastab ebanormaalseid mustreid missioonide lõpetamisel
         async function detectAbnormalPattern(profile, questIds) {
             try {
+                // kontrollib, et profiil on kehtiv objekt
                 if (!profile || typeof profile !== 'object') {
                     return [];
                 }
                 
+                // kontrollib, et questIds on massiiv
                 if (!questIds || !Array.isArray(questIds) || questIds.length === 0) {
                     return [];
                 }
                 
                 const warnings = [];
                 
-                // Check only daily limit (5 missions per day) - no other verification needed
+                // kontrollib ainult päevast limiiti (5 missiooni päevas)
                 const today = getTodayDateString();
                 const dailyCompletions = profile.dailyQuestCompletions || {};
+                // eemaldab duplikaadid, et vältida topeltarvutamist
                 const todayCompletions = Array.isArray(dailyCompletions[today]) 
-                    ? [...new Set(dailyCompletions[today])] // Unique missions
+                    ? [...new Set(dailyCompletions[today])]
                     : [];
                 const uniqueQuestIds = [...new Set(questIds)];
-                const newTotal = todayCompletions.length + uniqueQuestIds.length;
                 
-                const MAX_DAILY_QUESTS = 5; // Maximum 5 missions per day
+                // eemaldab questi, mis on juba täna tehtud (et vältida topeltarvutamist)
+                const newQuestIds = uniqueQuestIds.filter(id => !todayCompletions.includes(id));
+                const newTotal = todayCompletions.length + newQuestIds.length;
+                
+                // maksimaalne limiit päevas
+                const MAX_DAILY_QUESTS = 5;
                 if (newTotal > MAX_DAILY_QUESTS) {
                     warnings.push({
                         type: "daily_limit",
@@ -2531,6 +2591,7 @@
                 
                 return warnings;
             } catch (error) {
+                // logib vea, aga ei katkesta rakendust
                 console.error("Error in detectAbnormalPattern:", error);
                 return [];
             }
@@ -2589,8 +2650,64 @@
                     });
                     return { quests: newQuests, resetTime: getCurrentTimestamp() };
                 } else {
+                    // filtreerib allQuests, et leida päevased questi
+                    // kui quest on currentDailyQuestIds'is, siis on see saadaval (isegi kui on varem tehtud)
                     const currentQuests = allQuests.filter(q => currentDailyQuestIds.includes(q.id));
-                    if (currentQuests.length === 0) {
+                    
+                    // kui leitud questi on vähem kui oodatud, proovib täiendada
+                    if (currentQuests.length < currentDailyQuestIds.length) {
+                        // laeb quests.json, et saada õiged quest andmed
+                        const questsData = await loadQuestsData();
+                        const missingQuestIds = currentDailyQuestIds.filter(id => !currentQuests.some(q => q.id === id));
+                        
+                        for (const questId of missingQuestIds) {
+                            const questMapping = QUEST_ID_MAPPING[questId];
+                            if (questMapping && questsData) {
+                                // otsib quest'i quests.json'ist
+                                let questTitle = `Quest ${questId}`;
+                                let questXP = 35;
+                                
+                                for (const jsonId of questMapping.jsonIds || []) {
+                                    for (const category of questsData.categories || []) {
+                                        const quest = category.quests?.find(q => q.id === jsonId);
+                                        if (quest) {
+                                            questTitle = quest.shortName || quest.description || questTitle;
+                                            questXP = quest.xp || questXP;
+                                            break;
+                                        }
+                                    }
+                                    if (questTitle !== `Quest ${questId}`) break;
+                                }
+                                
+                                // loob quest objekti õigete andmetega
+                                currentQuests.push({
+                                    id: questId,
+                                    title: questTitle,
+                                    reward: `${questXP} XP`,
+                                    xp: questXP,
+                                    category: questMapping.category || "unknown",
+                                    categoryName: questMapping.categoryName || "Unknown",
+                                    categoryIcon: questMapping.categoryIcon || "📋",
+                                    categoryColor: questMapping.categoryColor || "#999999"
+                                });
+                            } else if (questMapping) {
+                                // kui quests.json ei ole saadaval, kasutab minimaalset objekti
+                                currentQuests.push({
+                                    id: questId,
+                                    title: `Quest ${questId}`,
+                                    reward: "XP",
+                                    xp: 35,
+                                    category: questMapping.category || "unknown",
+                                    categoryName: questMapping.categoryName || "Unknown",
+                                    categoryIcon: questMapping.categoryIcon || "📋",
+                                    categoryColor: questMapping.categoryColor || "#999999"
+                                });
+                            }
+                        }
+                    }
+                    
+                    // Eğer currentDailyQuestIds'de 5'ten az quest varsa veya hiç quest yoksa, reset yap
+                    if (currentQuests.length === 0 || currentDailyQuestIds.length < 5) {
                         const newQuests = await resetDailyQuests(user, allQuests, completedQuests, allQuestsCompleted);
                         startCountdown(getCurrentTimestamp(), () => {
                             location.reload();
@@ -2621,6 +2738,7 @@
             const profile = profileResult.success ? profileResult.data : {};
             const questCompletionCount = profile.questCompletionCount || {}; // { questId: loendur }
             const allQuestsCompleted = profile.allQuestsCompleted || false;
+            const currentDailyQuestIds = profile.currentDailyQuests || []; // päevased questi ID-d
 
             const questsData = await loadQuestsData();
             const categoryStats = questsData ? calculateQuestProgress(questsData, completedQuestIds || []) : null;
@@ -2628,13 +2746,20 @@
             quests.forEach((quest, index) => {
                 const isCompletedToday = dailyCompletedQuests.includes(quest.id);
                 const wasEverCompleted = completedQuestIds.includes(quest.id);
-                const isCompleted = allQuestsCompleted ? isCompletedToday : (isCompletedToday || wasEverCompleted);
+                // kui quest on päevastes questides (currentDailyQuests), siis saab seda täita isegi kui on varem tehtud
+                // replay mode'is või kui quest on päevastes questides, ei keela checkbox'i
+                const isInDailyQuests = currentDailyQuestIds.includes(quest.id);
+                // kui quest on päevastes questides, siis ei keela seda (lubab uuesti täita)
+                const isCompleted = allQuestsCompleted ? false : (isCompletedToday || (wasEverCompleted && !isInDailyQuests));
                 
                 const completionCount = questCompletionCount[quest.id] || 0;
                 const bonusMultiplier = getQuestBonusMultiplier(completionCount);
                 const bonusXP = Math.floor(quest.xp * bonusMultiplier);
                 const missionItem = document.createElement("div");
-                missionItem.className = `mission-item ${isCompleted ? 'completed' : ''}`;
+                // näitab visuaalselt, et quest on varem tehtud, aga ei keela uuesti täitmist kui on päevastes questides
+                // kui quest on päevastes questides, siis ei näita seda täidetuna (lubab uuesti täita)
+                const visualCompleted = allQuestsCompleted ? isCompletedToday : (isCompletedToday || (wasEverCompleted && !isInDailyQuests));
+                missionItem.className = `mission-item ${visualCompleted ? 'completed' : ''}`;
                 missionItem.dataset.questIndex = index;
                 missionItem.dataset.questId = quest.id;
                 missionItem.dataset.category = quest.category;
@@ -2642,8 +2767,10 @@
                 const checkbox = document.createElement("input");
                 checkbox.type = "checkbox";
                 checkbox.id = `mission-${index + 1}`;
+                // kui quest on päevastes questides, ei keela checkbox'i (lubab uuesti täita)
+                // replay mode'is või kui quest on päevastes questides, ei keela checkbox'i
                 checkbox.disabled = isCompleted;
-                checkbox.checked = isCompleted;
+                checkbox.checked = visualCompleted;
                 
                 const questContent = document.createElement("div");
                 questContent.className = "quest-content";
@@ -3224,10 +3351,10 @@
             `;
 
             infoCard.innerHTML = `
-                <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 15px;">
-                    <div style="font-size: 48px;">🔄</div>
+                <div style="position: relative; display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 15px;">
+                    <div class="replay-icon" style="font-size: 48px; position: relative;">🔄</div>
                     <div style="text-align: left;">
-                        <h3 style="margin: 0; font-size: 22px; font-weight: 600;">Replay Mode Active!</h3>
+                        <h3 style="margin: 0; font-size: 22px; font-weight: 600; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">Replay Mode Active!</h3>
                         <p style="margin: 5px 0 0 0; opacity: 0.95; font-size: 16px; font-weight: 600;">
                             ${completionCount} ${completionCount === 1 ? 'time' : 'times'} completed
                         </p>
@@ -3240,6 +3367,17 @@
                     Keep playing to earn bonus rewards by repeating quests!
                 </p>
             `;
+            
+            // lisab sädelevad tähed
+            const sparklesContainer = document.createElement('div');
+            sparklesContainer.style.cssText = 'position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; overflow: hidden; border-radius: 15px;';
+            for (let i = 0; i < 5; i++) {
+                const sparkle = document.createElement('div');
+                sparkle.className = 'replay-sparkle';
+                sparklesContainer.appendChild(sparkle);
+            }
+            infoCard.style.position = 'relative';
+            infoCard.appendChild(sparklesContainer);
 
             const userStats = document.querySelector('.user-stats');
             if (userStats && userStats.parentNode) {
@@ -3250,6 +3388,100 @@
                     dashboard.insertBefore(infoCard, dashboard.firstChild);
                 }
             }
+        }
+
+        // näitab erilist animatsiooni replay mode avamisel
+        function showReplayModeUnlockAnimation() {
+            // loob tumeda tausta overlay
+            const overlay = document.createElement('div');
+            overlay.id = 'replayModeOverlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.75);
+                z-index: 9999;
+                animation: fadeIn 0.4s ease-out;
+            `;
+            
+            const animationContainer = document.createElement('div');
+            animationContainer.id = 'replayModeUnlockAnimation';
+            animationContainer.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 10000;
+                pointer-events: none;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            `;
+            
+            const celebrationText = document.createElement('div');
+            celebrationText.style.cssText = `
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+                background-size: 200% 200%;
+                color: white;
+                padding: 50px 70px;
+                border-radius: 25px;
+                font-size: 32px;
+                font-weight: 700;
+                text-align: center;
+                box-shadow: 0 15px 50px rgba(102, 126, 234, 0.6);
+                animation: slideInReplay 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), pulseReplay 2s ease-in-out infinite, gradientShift 3s ease infinite;
+                text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+                position: relative;
+                overflow: hidden;
+            `;
+            
+            // lisab sädelevad tähed taustale
+            const sparkles = document.createElement('div');
+            sparkles.style.cssText = 'position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none;';
+            for (let i = 0; i < 8; i++) {
+                const sparkle = document.createElement('div');
+                sparkle.style.cssText = `
+                    position: absolute;
+                    width: 12px;
+                    height: 12px;
+                    background: #ffd700;
+                    border-radius: 50%;
+                    animation: sparkle 2s ease-in-out infinite;
+                    animation-delay: ${i * 0.25}s;
+                `;
+                sparkle.style.top = `${Math.random() * 100}%`;
+                sparkle.style.left = `${Math.random() * 100}%`;
+                sparkles.appendChild(sparkle);
+            }
+            celebrationText.appendChild(sparkles);
+            
+            celebrationText.innerHTML += `
+                <div style="font-size: 80px; margin-bottom: 25px; animation: rotateReplay 2s linear infinite; position: relative; z-index: 1;">🔄</div>
+                <div style="font-size: 42px; margin-bottom: 15px; position: relative; z-index: 1; animation: slideInReplay 0.8s ease-out 0.2s both;">🎉 Replay Mode Unlocked! 🎉</div>
+                <div style="font-size: 20px; opacity: 0.95; margin-top: 15px; position: relative; z-index: 1; animation: slideInReplay 0.8s ease-out 0.4s both;">Keep playing to earn bonus rewards!</div>
+                <div style="font-size: 16px; opacity: 0.8; margin-top: 20px; position: relative; z-index: 1; animation: slideInReplay 0.8s ease-out 0.6s both;">✨ Repeat quests for up to 3x XP bonus! ✨</div>
+            `;
+            
+            animationContainer.appendChild(celebrationText);
+            document.body.appendChild(overlay);
+            document.body.appendChild(animationContainer);
+            
+            // eemaldab animatsiooni pärast 4 sekundit
+            setTimeout(() => {
+                celebrationText.style.animation = 'slideInReplay 0.6s ease-out reverse';
+                overlay.style.animation = 'fadeIn 0.5s ease-out reverse';
+                setTimeout(() => {
+                    if (animationContainer.parentNode) {
+                        animationContainer.parentNode.removeChild(animationContainer);
+                    }
+                    if (overlay.parentNode) {
+                        overlay.parentNode.removeChild(overlay);
+                    }
+                }, 600);
+            }, 4000);
         }
 
         async function showAllQuestsCompletedCelebration(user, bonusXP = 500, bonusEcoPoints = 250, profileData = null) {
@@ -3962,6 +4194,13 @@
                     const allQuestsCheck = await checkAllQuestsCompleted(completedQuests);
                     if (allQuestsCheck.allCompleted && profile.allQuestsCompleted) {
                         await showAllQuestsCompletedInfoCard(user);
+                        // kui replay mode on juba aktiivne, näitab ka animatsiooni (kui see on esimene kord kui leht laetakse)
+                        const replayCard = document.getElementById('allQuestsCompletedCard');
+                        if (replayCard && !replayCard.classList.contains('animated')) {
+                            replayCard.classList.add('animated');
+                            // lisab väikese animatsiooni kaardile
+                            replayCard.style.animation = 'slideInReplay 0.6s ease-out, pulseReplay 2s ease-in-out infinite, gradientShift 3s ease infinite';
+                        }
                     }
                     
                     setTimeout(async () => {
@@ -4089,14 +4328,17 @@
                 let errorMessage = "Error loading data. ";
                 let userFriendlyMessage = "";
                 
-                // Check specific error types
+                // kontrollib konkreetseid veatüüpe ja annab kasutajasõbraliku vastuse
                 if (error.code === 'permission-denied') {
+                    // see võib tähendada, et Firestore reeglid on valed
                     userFriendlyMessage = "Permission denied. Please check Firebase Firestore rules.";
                 } else if (error.code === 'unavailable') {
+                    // teenus on ajutiselt kättesaamatu
                     userFriendlyMessage = "Service temporarily unavailable. Please try again in a moment.";
                 } else if (error.message) {
                     userFriendlyMessage = error.message;
                 } else {
+                    // tundmatu viga, logib konsooli
                     userFriendlyMessage = "Unknown error. Please check console for details.";
                 }
                 

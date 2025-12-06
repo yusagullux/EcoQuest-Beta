@@ -918,24 +918,30 @@ async function assignTeamMission(profile, templateId) {
     alert(`Mission "${template.title}" assigned to your team! Rewards: ${finalXpReward} XP, ${finalEcoReward} EcoPoints`);
 }
 
+// meeskonna missiooni edenemise esitamine, kontrollib kõiki valideerimisi enne salvestamist
 async function submitTeamMissionProgress(profile, missionId, note) {
+    // kontrollib, et kasutaja on meeskonnas
     if (!profile.teamId) {
         throw new Error("Join a team first.");
     }
+    // värskendab meeskonna andmeid, kui need puuduvad
     if (!currentTeamData) {
         await refreshTeamData(profile);
     }
+    // kontrollib, et märkused on piisavalt pikad
     const trimmed = (note || "").trim();
     if (trimmed.length < TEAM_REWARD_RULES.minReflectionLength) {
         throw new Error(`Please describe your effort in at least ${TEAM_REWARD_RULES.minReflectionLength} characters.`);
     }
     const missionRef = doc(db, "teams", profile.teamId, "activeMissions", missionId);
     const snapshot = await getDoc(missionRef);
+    // kontrollib, et missioon on olemas
     if (!snapshot.exists()) {
         throw new Error("Mission not found.");
     }
     const mission = snapshot.data();
     const submissions = mission.submissions || [];
+    // kontrollib, et kasutaja pole juba esitanud
     if (submissions.some(sub => sub.userId === currentUser.uid)) {
         throw new Error("You already submitted proof for this mission.");
     }
@@ -974,32 +980,39 @@ async function submitTeamMissionProgress(profile, missionId, note) {
     }
 }
 
+// meeskonna missiooni kinnitamine, kontrollib õigusi ja esituste arvu enne kinnitamist
 async function approveTeamMission(profile, missionId) {
+    // kontrollib, et kasutaja on meeskonnas
     if (!profile.teamId) {
         throw new Error("No team linked.");
     }
+    // värskendab meeskonna andmeid, kui need puuduvad
     if (!currentTeamData) {
         await refreshTeamData(profile);
     }
+    // kontrollib, et ainult juhid saavad kinnitada
     if (profile.teamRole !== 'leader' && profile.teamRole !== 'co_leader') {
         throw new Error("Only leaders can approve missions.");
     }
     const missionRef = doc(db, "teams", profile.teamId, "activeMissions", missionId);
     const snapshot = await getDoc(missionRef);
+    // kontrollib, et missioon on olemas
     if (!snapshot.exists()) {
         throw new Error("Mission not found.");
     }
     const mission = snapshot.data();
     const submissions = mission.submissions || [];
+    // kontrollib minimaalset esitajate arvu
     if (submissions.length < TEAM_LIMITS.minUniqueSubmitters) {
         throw new Error(`Need at least ${TEAM_LIMITS.minUniqueSubmitters} unique submissions before approval.`);
     }
+    // kontrollib, et kõik vajalikud esitused on olemas
     if (submissions.length < mission.requiredSubmissions) {
         throw new Error(`Need ${mission.requiredSubmissions} submissions, but only ${submissions.length} provided.`);
     }
     
     const participants = submissions;
-    // Calculate rewards per user with minimum guarantees
+    // arvutab tasu kasutaja kohta minimaalsete garantidega
     const xpPerUser = Math.max(15, Math.floor(mission.xpReward / participants.length));
     const ecoPerUser = Math.max(8, Math.floor(mission.ecoReward / participants.length));
     
@@ -1008,18 +1021,20 @@ async function approveTeamMission(profile, missionId) {
     const approverXp = Math.floor(xpPerUser * approverBonus);
     const approverEco = Math.floor(ecoPerUser * approverBonus);
     
-    // Distribute rewards to all participants
+    // jaotab tasud kõikidele osalejatele, kontrollib iga osaleja profiili
     for (const participant of participants) {
         try {
+            // kontrollib, et osaleja profiil on olemas
             const profileResult = await getUserProfile(participant.userId);
             if (!profileResult.success) continue;
             const participantProfile = profileResult.data;
             
-            // Check if this is the approver
+            // kontrollib, kas see on kinnitaja (saab boonust)
             const isApprover = participant.userId === currentUser.uid;
             const rewardXp = isApprover ? approverXp : xpPerUser;
             const rewardEco = isApprover ? approverEco : ecoPerUser;
             
+            // tagab, et XP ja EcoPoints on alati positiivsed arvud
             const newXP = (participantProfile.xp || 0) + rewardXp;
             const newLevel = calculateLevel(newXP);
             const newEco = (participantProfile.ecoPoints || 0) + rewardEco;

@@ -49,6 +49,68 @@
     }
 }
 
+/* ============================================
+   REPLAY MODE ANIMATIONS - PROFILE PAGE
+   ============================================ */
+
+/* replay mode kaart animatsioonid */
+#replayModeCard {
+    animation: slideInReplay 0.5s ease-out;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+#replayModeCard::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        transform: translateX(-100%) translateY(-100%) rotate(45deg);
+    }
+    100% {
+        transform: translateX(100%) translateY(100%) rotate(45deg);
+    }
+}
+
+#replayModeCard:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+#replayModeCard .stat-icon {
+    animation: rotateReplay 4s linear infinite;
+    display: inline-block;
+}
+
+@keyframes rotateReplay {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes slideInReplay {
+    0% {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.9);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
 .loading-state p,
 .error-state p {
     font-size: 14px;

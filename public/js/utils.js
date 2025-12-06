@@ -7,29 +7,39 @@ const MIN_PASSWORD_LENGTH = 6;
 const MAX_DISPLAY_NAME_LENGTH = 50;
 const MIN_DISPLAY_NAME_LENGTH = 2;
 
+// e-posti valideerimine, kontrollib et e-post on kehtiv enne andmebaasi salvestamist
 export function validateEmail(email) {
+    // kontrollib, et e-post on olemas ja string tüüpi
     if (!email || typeof email !== 'string') {
         return { valid: false, error: 'Email is required' };
     }
     
-    const trimmedEmail = email.trim().toLowerCase();
+    const cleanedEmail = email.trim().toLowerCase();
+    const maxEmailLength = 254;
     
-    if (!EMAIL_REGEX.test(trimmedEmail)) {
+    // kontrollib e-posti formaati regex abil
+    if (!EMAIL_REGEX.test(cleanedEmail)) {
         return { valid: false, error: 'Please enter a valid email address' };
     }
     
-    if (trimmedEmail.length > 254) {
+    // kontrollib e-posti pikkust 
+    if (cleanedEmail.length > maxEmailLength) {
         return { valid: false, error: 'Email is too long' };
     }
     
-    return { valid: true, email: trimmedEmail };
+    return { valid: true, email: cleanedEmail };
 }
 
+// tagab turvalisuse, kontrollib parooli pikkust
 export function validatePassword(password) {
+    // kontrollib, et parool on olemas ja string tüüpi
     if (!password || typeof password !== 'string') {
         return { valid: false, error: 'Password is required' };
     }
     
+    const maxPasswordLength = 128;
+    
+    // kontrollib minimaalset pikkust (Firebase nõue: vähemalt 6 tähemärki)
     if (password.length < MIN_PASSWORD_LENGTH) {
         return { 
             valid: false, 
@@ -37,7 +47,8 @@ export function validatePassword(password) {
         };
     }
     
-    if (password.length > 128) {
+    // kontrollib maksimaalset pikkust (vältib liiga pikkade paroolide salvestamist)
+    if (password.length > maxPasswordLength) {
         return { valid: false, error: 'Password is too long' };
     }
     
@@ -70,27 +81,35 @@ export function validateDisplayName(displayName) {
     return { valid: true, displayName: sanitizedName };
 }
 
+// Sisendi puhastamine
 export function sanitizeInput(input) {
+    // kontrollib, et sisend on string
     if (typeof input !== 'string') {
         return '';
     }
     
+    const maxInputLength = 200;
+    const dangerousHtmlChars = /[<>]/g;
+    
+    // eemaldab HTML märgid (< ja >), et vältida XSS rünnakuid
     return input
         .trim()
-        .replace(/[<>]/g, '')
-        .substring(0, 200);
+        .replace(dangerousHtmlChars, '')
+        .substring(0, maxInputLength);
 }
 
+// veateate vormindamine
 export function formatErrorMessage(error) {
+    // kontrollib, et viga on olemas
     if (!error) {
         return 'An unexpected error occurred. Please try again.';
     }
     
-    // First check error.code field (Firebase standard)
+    // kontrollib esmalt error.code välja
     const errorCode = error.code || '';
     const errorMessage = error.message || error.toString();
     
-    // User-friendly error messages
+    // kasutajasõbralikud veateated
     const userFriendlyMessages = {
         'auth/email-already-in-use': 'This email is already registered. Please sign in instead.',
         'auth/invalid-email': 'Please enter a valid email address.',
@@ -107,19 +126,19 @@ export function formatErrorMessage(error) {
         'unavailable': 'Service is temporarily unavailable. Please try again later.'
     };
     
-    // First check error.code value
+    // kontrollib esmalt error.code väärtust
     if (errorCode && userFriendlyMessages[errorCode]) {
         return userFriendlyMessages[errorCode];
     }
     
-    // Then check error.message content
+    // kontrollib seejärel error.message sisu
     for (const [key, message] of Object.entries(userFriendlyMessages)) {
         if (errorMessage.includes(key)) {
             return message;
         }
     }
     
-    // Return generic message if no match found
+    // tagastab üldise sõnumi, kui sobivat viga ei leitud
     return 'Invalid email or password. Please check your credentials and try again.';
 }
 

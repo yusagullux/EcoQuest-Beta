@@ -42,14 +42,145 @@
   --spacing-sm: 1rem;    /* Small spacing */
   --spacing-md: 1.5rem;  /* Medium spacing */
   --spacing-lg: 2rem;    /* Large spacing */
-  --spacing-xl: 3rem;    /* Very large spacing */
+  --spacing-xl: 3rem;    
 }
 
+
 /* ============================================
-   GENERAL STYLES
+   REPLAY MODE ANIMATIONS
    ============================================ */
 
-/* Kõik elemendid kasutavad border-box'i (lihtsam arvutamine) */
+/* pöörlev ikoon replay mode'is */
+@keyframes rotateReplay {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* pulsiivne efekt replay mode kaardil */
+@keyframes pulseReplay {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    50% {
+        transform: scale(1.02);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+    }
+}
+
+/* sisse tulev animatsioon replay mode kaardile */
+@keyframes slideInReplay {
+    0% {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.9);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* sädelev efekt replay mode'is */
+@keyframes sparkle {
+    0%, 100% {
+        opacity: 0;
+        transform: scale(0);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* värviline gradient animatsioon */
+@keyframes gradientShift {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+/* tulevärk efekt replay mode avamisel */
+@keyframes confettiFall {
+    0% {
+        transform: translateY(-100vh) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100vh) rotate(720deg);
+        opacity: 0;
+    }
+}
+
+/* fade in animatsioon overlay'ile */
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+/* replay mode kaart stiilid */
+#allQuestsCompletedCard {
+    animation: slideInReplay 0.6s ease-out, pulseReplay 2s ease-in-out infinite;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    background-size: 200% 200%;
+    animation: slideInReplay 0.6s ease-out, pulseReplay 2s ease-in-out infinite, gradientShift 3s ease infinite;
+}
+
+#allQuestsCompletedCard .replay-icon {
+    animation: rotateReplay 3s linear infinite;
+    display: inline-block;
+}
+
+/* replay mode ikoon profile'is */
+#replayModeCard {
+    animation: slideInReplay 0.5s ease-out;
+    transition: all 0.3s ease;
+}
+
+#replayModeCard:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+#replayModeCard .stat-icon {
+    animation: rotateReplay 4s linear infinite;
+    display: inline-block;
+}
+
+/* sädelevad tähed replay mode'is */
+.replay-sparkle {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #ffd700;
+    border-radius: 50%;
+    animation: sparkle 1.5s ease-in-out infinite;
+}
+
+.replay-sparkle:nth-child(1) { top: 10%; left: 20%; animation-delay: 0s; }
+.replay-sparkle:nth-child(2) { top: 30%; left: 80%; animation-delay: 0.3s; }
+.replay-sparkle:nth-child(3) { top: 60%; left: 40%; animation-delay: 0.6s; }
+.replay-sparkle:nth-child(4) { top: 80%; left: 70%; animation-delay: 0.9s; }
+.replay-sparkle:nth-child(5) { top: 20%; left: 60%; animation-delay: 1.2s; }
+
+/* ============================================
+   END REPLAY MODE ANIMATIONS
+   ============================================ */
+
+/* Kõik elemendid kasutavad border-box */
 * {
   box-sizing: border-box;
 }
@@ -63,6 +194,33 @@ body {
   background: var(--color-bg-light);
   font-size: 16px;
   line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
+  box-sizing: border-box;
+}
+
+/* Touch-friendly butonlar */
+button, 
+.team-btn,
+.complete-button,
+.photo-btn {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(76, 175, 80, 0.2);
+  min-height: 44px;
+  min-width: 44px;
+}
+
+@media (min-width: 768px) {
+  button, 
+  .team-btn,
+  .complete-button,
+  .photo-btn {
+    min-height: auto;
+    min-width: auto;
+  }
 }
 
 /* Pealkirjad kasutavad peamist fonti */
@@ -302,9 +460,16 @@ nav ul li a:hover {
 main {
   max-width: var(--max-width);
   margin: 0 auto;
-  padding: var(--spacing-md) var(--spacing-sm) var(--spacing-lg);
+  padding: var(--spacing-sm);
   width: 100%;
   box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+@media (min-width: 480px) {
+  main {
+    padding: var(--spacing-md) var(--spacing-sm) var(--spacing-lg);
+  }
 }
 
 @media (min-width: 768px) {
@@ -1353,20 +1518,22 @@ main {
    Mobile: 1 veerg, Tablet: 2 veergu
    ============================================ */
 .quest-progress-section {
-  margin-top: var(--spacing-md);
-  margin-bottom: var(--spacing-md);
+  margin-top: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
   width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 .quest-progress-section .dashboard-card {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
+  overflow-x: hidden;
 }
 
-@media (max-width: 767px) {
+@media (min-width: 480px) {
   .quest-progress-section {
-    padding: 0;
     margin-top: var(--spacing-md);
     margin-bottom: var(--spacing-md);
   }
@@ -1383,8 +1550,16 @@ main {
 .charts-container {
   display: grid;
   grid-template-columns: 1fr;  /* Mobile: 1 veerg */
-  gap: var(--spacing-md);
+  gap: var(--spacing-sm);
   margin-bottom: var(--spacing-md);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (min-width: 480px) {
+  .charts-container {
+    gap: var(--spacing-md);
+  }
 }
 
 @media (min-width: 640px) {
@@ -1404,15 +1579,23 @@ main {
 
 .chart-wrapper {
   background: var(--color-white);
-  padding: var(--spacing-md);
+  padding: var(--spacing-sm);
   border-radius: 12px;
   box-shadow: var(--shadow-light);
   transition: var(--transition);
   display: flex;
   flex-direction: column;
   width: 100%;
-  min-height: 280px;
+  min-height: 250px;
   position: relative;
+  overflow: hidden;
+}
+
+@media (min-width: 480px) {
+  .chart-wrapper {
+    padding: var(--spacing-md);
+    min-height: 280px;
+  }
 }
 
 @media (min-width: 640px) {
@@ -1434,13 +1617,22 @@ main {
 }
 
 .chart-wrapper h3 {
-  margin: 0 0 var(--spacing-md) 0;
+  margin: 0 0 var(--spacing-sm) 0;
   color: var(--color-accent);
-  font-size: 16px;
+  font-size: 14px;
   text-align: center;
   font-family: var(--font-main);
   font-weight: 600;
   line-height: 1.3;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+@media (min-width: 480px) {
+  .chart-wrapper h3 {
+    font-size: 16px;
+    margin-bottom: var(--spacing-md);
+  }
 }
 
 @media (min-width: 640px) {
@@ -1453,8 +1645,16 @@ main {
 .chart-wrapper canvas {
   width: 100% !important;
   height: auto !important;
-  max-height: 220px;
-  min-height: 180px;
+  max-height: 200px;
+  min-height: 160px;
+  touch-action: pan-x pan-y;
+}
+
+@media (min-width: 480px) {
+  .chart-wrapper canvas {
+    max-height: 220px;
+    min-height: 180px;
+  }
 }
 
 @media (min-width: 640px) {
@@ -1490,8 +1690,17 @@ main {
 .category-progress-list {
   display: grid;
   grid-template-columns: 1fr;
-  gap: var(--spacing-md);
-  margin-top: var(--spacing-md);
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-sm);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (min-width: 480px) {
+  .category-progress-list {
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-md);
+  }
 }
 
 @media (min-width: 640px) {
@@ -1614,13 +1823,15 @@ main {
   font-weight: 600;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 639px) {
   .charts-container {
     grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
   }
 
   .category-progress-list {
     grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
   }
 
   .category-progress-header {
@@ -1630,6 +1841,15 @@ main {
 
   .category-badge {
     align-self: flex-start;
+  }
+  
+  .chart-wrapper {
+    min-height: 220px;
+  }
+  
+  .chart-wrapper canvas {
+    max-height: 180px;
+    min-height: 140px;
   }
 }
 
@@ -2623,32 +2843,59 @@ body.modal-open {
 .insights-charts {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 20px;
-    margin-top: 20px;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-md);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+@media (min-width: 480px) {
+    .insights-charts {
+        gap: var(--spacing-md);
+    }
 }
 
 @media (min-width: 640px) {
     .insights-charts {
         grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
     }
 }
 
 @media (min-width: 1024px) {
     .insights-charts {
         grid-template-columns: repeat(3, 1fr);
+        gap: 24px;
     }
 }
 
 .insight-chart-wrapper {
     background: var(--color-white);
     border-radius: var(--border-radius);
-    padding: 24px;
+    padding: var(--spacing-sm);
     border: 1px solid rgba(76, 175, 80, 0.15);
     box-shadow: var(--shadow-light);
     transition: var(--transition);
-    min-height: 280px;
+    min-height: 250px;
     display: flex;
     flex-direction: column;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+@media (min-width: 480px) {
+    .insight-chart-wrapper {
+        padding: var(--spacing-md);
+        min-height: 280px;
+    }
+}
+
+@media (min-width: 768px) {
+    .insight-chart-wrapper {
+        padding: 24px;
+        min-height: 300px;
+    }
 }
 
 .insight-chart-wrapper:hover {
@@ -2658,32 +2905,71 @@ body.modal-open {
 
 .insight-chart-wrapper h3 {
     font-family: var(--font-main);
-    font-size: 18px;
+    font-size: 14px;
     font-weight: 600;
     color: var(--color-accent);
-    margin: 0 0 20px 0;
+    margin: 0 0 var(--spacing-sm) 0;
     flex-shrink: 0;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.3;
+}
+
+@media (min-width: 480px) {
+    .insight-chart-wrapper h3 {
+        font-size: 16px;
+        margin-bottom: var(--spacing-md);
+    }
+}
+
+@media (min-width: 768px) {
+    .insight-chart-wrapper h3 {
+        font-size: 18px;
+        margin-bottom: 20px;
+    }
 }
 
 .insight-chart-wrapper canvas {
-    max-height: 250px;
+    max-height: 200px;
+    min-height: 160px;
+    width: 100% !important;
+    height: auto !important;
+    touch-action: pan-x pan-y;
+}
+
+@media (min-width: 480px) {
+    .insight-chart-wrapper canvas {
+        max-height: 220px;
+        min-height: 180px;
+    }
+}
+
+@media (min-width: 768px) {
+    .insight-chart-wrapper canvas {
+        max-height: 250px;
+        min-height: 200px;
+    }
 }
 
 @media (max-width: 767px) {
     .insights-charts {
         grid-template-columns: 1fr;
+        gap: var(--spacing-sm);
     }
     
     .insight-chart-wrapper {
-        padding: 16px;
+        padding: var(--spacing-sm);
+        min-height: 220px;
     }
     
     .insight-chart-wrapper h3 {
-        font-size: 16px;
+        font-size: 14px;
+        margin-bottom: var(--spacing-sm);
     }
     
     .insight-chart-wrapper canvas {
-        max-height: 200px;
+        max-height: 180px;
+        min-height: 140px;
     }
     
     .team-leaderboard-item {

@@ -13,7 +13,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
-        /* Mobile-first approach */
+        /* Mobile-first */
         .leaderboard-container {
             max-width: var(--max-width);
             margin: 0 auto;
@@ -120,6 +120,7 @@
             }
         }
 
+        /* Viimane Rida(Viimane Rida ei ole piirangutel) */
         .leaderboard-item:last-child {
             border-bottom: none;
         }
@@ -597,49 +598,46 @@
         </div>
     </main>
 
+    <!-- Leaderboard JavaScript -->
     <script type="module">
         import { requireAuth } from "../js/auth-guard.js";
         import { logOut, getAllUsers } from "../js/auth.js";
 
-        /**
-         * Badge image mapping for levels
-         */
+        // helkuri piltide loetelu, tagab et iga taseme jaoks on õige pilt
         function getBadgeImageForLevel(level) {
             const badgeImages = {
-                1: "../images/ecoquests-badges/cat-badge-removedbg.png",
-                2: "../images/ecoquests-badges/fox-badge-removedbg.png",
-                3: "../images/ecoquests-badges/rabbit-badge-removedbg.png",
-                4: "../images/ecoquests-badges/deer-badge-removedbg.png",
-                5: "../images/ecoquests-badges/wolf-badge-removedbg.png",
-                6: "../images/ecoquests-badges/bear-badge-removedbg.png",
-                7: "../images/ecoquests-badges/eagle-badge-removedbg.png",
-                8: "../images/ecoquests-badges/tiger-badge-removedbg.png",
-                9: "../images/ecoquests-badges/lion-badge-removedbg.png"
+                1: "../images/ecoquests-badges/cat-badge-removedbg.png", // Level 1 Helkuri Pilt
+                2: "../images/ecoquests-badges/fox-badge-removedbg.png", // Level 2 Helkuri Pilt
+                3: "../images/ecoquests-badges/rabbit-badge-removedbg.png", // Level 3 Helkuri Pilt
+                4: "../images/ecoquests-badges/deer-badge-removedbg.png", // Level 4 Helkuri Pilt
+                5: "../images/ecoquests-badges/wolf-badge-removedbg.png", // Level 5 Helkuri Pilt
+                6: "../images/ecoquests-badges/bear-badge-removedbg.png", // Level 6 Helkuri Pilt
+                7: "../images/ecoquests-badges/eagle-badge-removedbg.png", // Level 7 Helkuri Pilt
+                8: "../images/ecoquests-badges/tiger-badge-removedbg.png", // Level 8 Helkuri Pilt
+                9: "../images/ecoquests-badges/lion-badge-removedbg.png" // Level 9 Helkuri Pilt
             };
+            // kui tase on kehtetu, tagastab vaikimisi Level 1 pildi
             return badgeImages[level] || badgeImages[1];
         }
 
-        /**
-         * Badge name mapping for levels
-         */
+        // helkuri nimede loetelu, tagab et iga taseme jaoks on õige nimi
         function getBadgeNameForLevel(level) {
             const badgeNames = {
-                1: "Cat",
-                2: "Fox",
-                3: "Rabbit",
-                4: "Deer",
-                5: "Wolf",
-                6: "Bear",
-                7: "Eagle",
-                8: "Tiger",
-                9: "Lion"
+                1: "Cat", // Level 1 Helkuri Nimi
+                2: "Fox", // Level 2 Helkuri Nimi
+                3: "Rabbit", // Level 3 Helkuri Nimi
+                4: "Deer", // Level 4 Helkuri Nimi
+                5: "Wolf", // Level 5 Helkuri Nimi
+                6: "Bear", // Level 6 Helkuri Nimi
+                7: "Eagle", // Level 7 Helkuri Nimi
+                8: "Tiger", // Level 8 Helkuri Nimi
+                9: "Lion" // Level 9 Helkuri Nimi
             };
+            // kui tase on kehtetu, tagastab vaikimisi Level 1 nime
             return badgeNames[level] || badgeNames[1];
         }
 
-        /**
-         * Calculate level from XP
-         */
+        // tasemete arvutamine XP põhjal
         function calculateLevel(xp) {
             const LEVEL_MILESTONES = [
                 0,      // Level 1: 0 XP
@@ -653,17 +651,19 @@
                 50000   // Level 9: 50,000 XP
             ];
 
+            // kontrollib, et XP on positiivne
+            if (xp < 0) return 1;
+            
+            // Kontrollib tagurpidi, et leida kõrgeim saavutatud tase
             for (let i = LEVEL_MILESTONES.length - 1; i >= 0; i--) {
                 if (xp >= LEVEL_MILESTONES[i]) {
                     return i + 1;
                 }
             }
-            return 1;
+            return 1; // Vaikimisi tase 1, kui XP on väga väike
         }
 
-        /**
-         * Get medal emoji for top 3 ranks
-         */
+        // Medali Emoji Loetelu(Top 3 Medali Emojid)
         function getMedalEmoji(rank) {
             if (rank === 1) return "🥇";
             if (rank === 2) return "🥈";
@@ -671,20 +671,21 @@
             return "";
         }
 
-        /**
-         * Render leaderboard
-         */
+        // leaderboard renderimine, kontrollib andmete kehtivust enne kuvamist
         async function renderLeaderboard(currentUserId) {
             const leaderboardList = document.getElementById("leaderboardList");
+            // kontrollib, et element on olemas
             if (!leaderboardList) return;
 
             try {
+                // laadib kõikide kasutajate loetelu Firestore'ist, võib ebaõnnestuda õiguste tõttu
                 const result = await getAllUsers();
                 
+                // kontrollib, et päring õnnestus
                 if (!result.success) {
                     const errorMessage = result.error || "Unknown error";
                     let userMessage = "Error loading leaderboard.";
-                    
+                    // kontrollib, kas probleem on õigustes
                     if (errorMessage.includes("permission") || errorMessage.includes("Permission")) {
                         userMessage = `
                             <p style="margin-bottom: 10px;"><strong>Permission Error</strong></p>
@@ -709,6 +710,7 @@
 
                 const users = result.data || [];
                 
+                // kontrollib, et kasutajaid on olemas
                 if (users.length === 0) {
                     leaderboardList.innerHTML = `
                         <li class="empty-state">
@@ -718,55 +720,67 @@
                     return;
                 }
 
-                // Sorteerib XP kahanevalt – ka Firebase teeb seda, kuid kinnitame tulemuse
+                // sorteerib kasutajad XP järgi kahanevalt
                 users.sort((a, b) => (b.xp || 0) - (a.xp || 0));
 
                 leaderboardList.innerHTML = "";
 
-                users.forEach((user, index) => {
-                    const rank = index + 1;
-                    const xp = user.xp || 0;
-                    const level = user.level || calculateLevel(xp);
-                    const displayName = user.displayName || user.email?.split("@")[0] || "Anonymous";
-                    const badgeImage = getBadgeImageForLevel(level);
-                    const badgeName = getBadgeNameForLevel(level);
-                    const isCurrentUser = user.id === currentUserId;
-                    const medalEmoji = getMedalEmoji(rank);
+                // renderib kõikide kasutajate loetelu, kontrollib andmete kehtivust
+                users.forEach((userData, index) => {
+                    const userRank = index + 1;
+                    // tagab, et XP on alati arv
+                    const userXp = userData.xp || 0;
+                    // arvutab taseme, kui see puudub profiilist
+                    const userLevel = userData.level || calculateLevel(userXp);
+                    // tagab, et kuvatakse alati mõni nimi
+                    const userName = userData.displayName || userData.email?.split("@")[0] || "Anonymous";
+                    const userBadgeImage = getBadgeImageForLevel(userLevel);
+                    const userBadgeName = getBadgeNameForLevel(userLevel);
+                    const isCurrentUser = userData.id === currentUserId;
+                    const rankMedalEmoji = getMedalEmoji(userRank);
 
                     const listItem = document.createElement("li");
-                    listItem.className = `leaderboard-item ${isCurrentUser ? "current-user" : ""} clickable-item`;
+                    const itemClassNames = `leaderboard-item ${isCurrentUser ? "current-user" : ""} clickable-item`;
+                    listItem.className = itemClassNames;
                     listItem.style.cursor = "pointer";
-                    listItem.setAttribute("data-user-id", user.id);
+                    listItem.setAttribute("data-user-id", userData.id);
+                    
+                    const isTopThree = userRank <= 3;
+                    const rankDisplay = isTopThree ? `${rankMedalEmoji}${userRank}` : userRank;
                     
                     listItem.innerHTML = `
-                        <div class="rank-number ${rank <= 3 ? `top-${rank}` : ""}">
-                            ${medalEmoji}${rank}
+                        <div class="rank-number ${isTopThree ? `top-${userRank}` : ""}">
+                            ${rankDisplay}
                         </div>
-                        <img src="${badgeImage}" alt="${badgeName} Badge" class="user-badge-small" />
+                        <img src="${userBadgeImage}" alt="${userBadgeName} Badge" class="user-badge-small" />
                         <div class="user-info-section">
-                            <h3 class="user-name">${displayName}${isCurrentUser ? " (You)" : ""}</h3>
-                            <p class="user-badge-name">${badgeName} Badge</p>
+                            <h3 class="user-name">${userName}${isCurrentUser ? " (You)" : ""}</h3>
+                            <p class="user-badge-name">${userBadgeName} Badge</p>
                         </div>
                         <div class="user-stats-section">
                             <div class="level-display">
-                                <span class="level-value">L${level}</span>
+                                <span class="level-value">L${userLevel}</span>
                                 <span class="level-label">Level</span>
                             </div>
                             <div class="xp-display">
-                                <span class="xp-value">${xp.toLocaleString()}</span>
+                                <span class="xp-value">${userXp.toLocaleString()}</span>
                                 <span class="xp-label">XP</span>
                             </div>
                         </div>
                     `;
 
-                // Muudab kogu rea klikitavaks
+                    // muudab kogu rea vajutavaks, avab kasutaja profiili
                     listItem.addEventListener("click", () => {
-                        window.location.href = `profile.html?userId=${user.id}`;
+                        // kontrollib, et user.id on olemas enne navigeerimist
+                        if (userData.id) {
+                            window.location.href = `profile.html?userId=${userData.id}`;
+                        }
                     });
 
                     leaderboardList.appendChild(listItem);
                 });
             } catch (error) {
+                // logib vea ja kuvab kasutajale sõbraliku teate
                 console.error("Error rendering leaderboard:", error);
                 leaderboardList.innerHTML = `
                     <li class="error-state">
@@ -776,33 +790,41 @@
             }
         }
 
-        // Initsialiseerib edetabeli
+        // autentimise kontroll ja leaderboard laadimine, tagab et ainult sisselogitud kasutajad näevad lehte
         requireAuth().then(async (user) => {
-            await renderLeaderboard(user.uid);
+            // kontrollib, et user.uid on olemas
+            if (user && user.uid) {
+                await renderLeaderboard(user.uid);
+            } else {
+                window.location.href = "login.html";
+            }
         }).catch((error) => {
+            // kui autentimine ebaõnnestub, suunab kasutaja sisselogimise lehele
             console.error("Auth error:", error);
             window.location.href = "login.html";
         });
 
-        // Väljalogimise nupp
+        // Väljalogimise nupp - oluline: kontrollib, et nupp on olemas enne event listeneri lisamist
         const logoutButton = document.getElementById("logoutButton");
         if (logoutButton) {
             logoutButton.addEventListener("click", async () => {
                 try {
                     const result = await logOut();
+                    // Oluline: kontrollib, et väljalogimine õnnestus enne suunamist
                     if (result.success) {
                         window.location.href = "login.html";
                     } else {
                         alert("Logout failed: " + (result.error || "Unknown error"));
                     }
                 } catch (error) {
+                    // Oluline: logib vea, et arendaja saaks selle tuvastada
                     console.error("Logout error:", error);
                     alert("An error occurred during logout. Please try again.");
                 }
             });
         }
 
-        // Mobiilse menüü lüliti
+        // Mobiilse menüü lüliti - oluline: kontrollib, et elemendid on olemas
         const mobileMenuToggle = document.getElementById("mobileMenuToggle");
         const mobileMenu = document.getElementById("mobileMenu");
         const logoutButtonMobile = document.getElementById("logoutButtonMobile");
@@ -814,7 +836,7 @@
                 mobileMenuToggle.classList.toggle("active");
                 mobileMenuToggle.setAttribute("aria-expanded", !isActive);
                 
-                // Takistab tausta kerimist, kui menüü on avatud
+                // Oluline: takistab tausta kerimist, kui menüü on avatud - parandab kasutajakogemust
                 if (!isActive) {
                     document.body.style.overflow = "hidden";
                 } else {
@@ -833,7 +855,7 @@
                 });
             });
 
-            // Sulgeb menüü, kui klikk toimub menüüst väljas
+            // Sulgeb menüü, kui klikk toimub menüüst väljas 
             document.addEventListener("click", (e) => {
                 if (mobileMenu.classList.contains("active") && 
                     !mobileMenu.contains(e.target) && 
@@ -851,12 +873,14 @@
             logoutButtonMobile.addEventListener("click", async () => {
                 try {
                     const result = await logOut();
+                    // Oluline: kontrollib, et väljalogimine õnnestus
                     if (result.success) {
                         window.location.href = "login.html";
                     } else {
                         alert("Logout failed: " + (result.error || "Unknown error"));
                     }
                 } catch (error) {
+                    // Oluline: logib vea, et arendaja saaks selle tuvastada
                     console.error("Logout error:", error);
                     alert("An error occurred during logout. Please try again.");
                 }
