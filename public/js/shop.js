@@ -392,8 +392,8 @@ async function loadUserData() {
 
         updateEcoPointsDisplay(userEcoPoints);
         filterPlants(currentFilter);
-        renderIncubations();
-        startIncubationTimer();
+        renderHatchings();
+        startHatchingTimer();
     } catch (error) {
         console.error("Error loading user data:", error);
         showToast("Error loading your data. Please refresh the page.", "error");
