@@ -49,10 +49,6 @@
             <div class="profile-header">
                 <div class="profile-avatar">
                     <img id="profileBadge" src="" alt="User Badge" class="profile-badge-image" />
-                    <div id="activePetDisplay" class="active-pet-display" style="display: none;">
-                        <img id="activePetImage" src="" alt="Active Pet" class="active-pet-image" />
-                        <span class="active-pet-label">Active Pet</span>
-                    </div>
                 </div>
                 <div class="profile-info">
                     <h1 id="profileName">User</h1>
@@ -112,6 +108,15 @@
                         <span class="stat-label">Replay Mode</span>
                         <span class="stat-value" id="replayModeCount">0</span>
                         <span class="stat-subtitle" style="font-size: 11px; opacity: 0.8;">times completed</span>
+                    </div>
+                </div>
+                <div class="profile-stat-card" id="activePetCard" style="display: none;">
+                    <div id="activePetDisplay" class="active-pet-display-stat">
+                        <img id="activePetImage" src="" alt="Active Pet" class="active-pet-image-stat" />
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-label">Active Pet</span>
+                        <span class="stat-value" id="activePetName">-</span>
                     </div>
                 </div>
             </div>

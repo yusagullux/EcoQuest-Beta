@@ -437,24 +437,26 @@ async function loadProfileData() {
             profileBadge.alt = `Level ${level} Badge`;
         }
         
-        // Display active pet
+        // Kuvab aktiivse lemmiku statistikute kaardil
+        const activePetCard = document.getElementById("activePetCard");
         const activePetDisplay = document.getElementById("activePetDisplay");
         const activePetImage = document.getElementById("activePetImage");
-        if (activePetDisplay && activePetImage) {
+        const activePetName = document.getElementById("activePetName");
+        if (activePetCard && activePetDisplay && activePetImage && activePetName) {
             if (activePet && activePet.image) {
                 activePetImage.src = activePet.image;
                 activePetImage.alt = activePet.name || "Active Pet";
+                activePetName.textContent = activePet.name || "-";
                 activePetImage.onerror = function() {
-                    // Use emoji placeholder if image fails
+                    // Kasutab emoji kohatäit kui pilt ebaõnnestub
                     this.style.display = "none";
                     activePetDisplay.innerHTML = `
-                        <div class="placeholder-active-pet">${getAnimalEmojiForProfile(activePet.name)}</div>
-                        <span class="active-pet-label">${activePet.name || "Active Pet"}</span>
+                        <div class="placeholder-active-pet-stat">${getAnimalEmojiForProfile(activePet.name)}</div>
                     `;
                 };
-                activePetDisplay.style.display = "flex";
+                activePetCard.style.display = "flex";
             } else {
-                activePetDisplay.style.display = "none";
+                activePetCard.style.display = "none";
             }
         }
         if (profileLevel) profileLevel.textContent = level;

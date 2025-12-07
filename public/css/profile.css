@@ -826,3 +826,62 @@
     }
 }
 
+/* Aktiivne lemmik statistikute ruudustikus */
+.active-pet-display-stat {
+    flex-shrink: 0;
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    background: var(--color-bg-light);
+    border: 2px solid var(--color-primary);
+    box-sizing: border-box;
+}
+
+@media (min-width: 480px) {
+    .active-pet-display-stat {
+        width: 60px;
+        height: 60px;
+    }
+}
+
+@media (min-width: 768px) {
+    .active-pet-display-stat {
+        width: 70px;
+        height: 70px;
+    }
+}
+
+.active-pet-image-stat {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center;
+    display: block !important;
+    border-radius: 10px;
+}
+
+.placeholder-active-pet-stat {
+    font-size: 28px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    border-radius: 10px;
+}
+
+@media (min-width: 480px) {
+    .placeholder-active-pet-stat {
+        font-size: 32px;
+    }
+}
+
+@media (min-width: 768px) {
+    .placeholder-active-pet-stat {
+        font-size: 36px;
+    }
+}
+
