@@ -12,6 +12,7 @@
     <link rel="icon" type="image/png" href="../images/logo.png" />
     <title>EcoQuest | Dashboard</title>
     <link rel="stylesheet" href="../css/dashboard.css" />
+    <link rel="stylesheet" href="../css/shop.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -4164,6 +4165,33 @@
         
         requireAuth().then(async (user) => {
             currentUser = user;
+            
+            // Kontrolli koorumisi ja näita animatsioone enne muude andmete laadimist
+            try {
+                const { checkAndProcessHatchings, showHatchingAnimationsSequentially } = await import("../js/hatching-utils.js");
+                const hatchingResult = await checkAndProcessHatchings(user.uid);
+                if (hatchingResult.hasNewHatchings && hatchingResult.newAnimals.length > 0) {
+                    // Peida dashboard sisu animatsioonide ajal
+                    const dashboard = document.getElementById("dashboard");
+                    if (dashboard) {
+                        dashboard.style.opacity = "0";
+                        dashboard.style.pointerEvents = "none";
+                    }
+                    
+                    // Näita animatsioonid järjestikku enne muude andmete laadimist
+                    await showHatchingAnimationsSequentially(hatchingResult.newAnimals);
+                    
+                    // Näita dashboard sisu pärast animatsioone
+                    if (dashboard) {
+                        dashboard.style.opacity = "1";
+                        dashboard.style.pointerEvents = "auto";
+                        dashboard.style.transition = "opacity 0.5s ease-in";
+                    }
+                }
+            } catch (error) {
+                console.error("Error checking hatchings on login:", error);
+            }
+            
             try {
                 const profileResult = await getUserProfile(user.uid);
                 
