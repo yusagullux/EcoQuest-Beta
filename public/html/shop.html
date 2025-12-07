@@ -42,12 +42,28 @@
             </div>
         </div>
 
+        <!-- Shop Mode Toggle -->
+        <div class="shop-mode-section">
+            <button class="shop-mode-btn active" data-mode="plants">🌱 Plants</button>
+            <button class="shop-mode-btn" data-mode="eggs">🥚 Eggs</button>
+        </div>
+
         <div class="filter-section">
             <button class="filter-btn active" data-rarity="all">All</button>
             <button class="filter-btn" data-rarity="common">Common</button>
             <button class="filter-btn" data-rarity="rare">Rare</button>
             <button class="filter-btn" data-rarity="epic">Epic</button>
             <button class="filter-btn" data-rarity="legendary">Legendary</button>
+        </div>
+
+        <!-- Hatching Section -->
+        <div class="hatching-section" id="hatchingSection">
+            <h2>🥚 Hatching Chamber</h2>
+            <div class="hatching-grid" id="hatchingGrid">
+                <div class="empty-hatching">
+                    <p>No eggs hatching. Buy an egg to start!</p>
+                </div>
+            </div>
         </div>
 
         <div id="loadingState" class="loading-state" role="status" aria-live="polite">

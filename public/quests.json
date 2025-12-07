@@ -135,6 +135,38 @@
           },
           "xp": 45,
           "ecoCoins": 35
+        },
+        {
+          "id": "recycling_9",
+          "shortName": "Repair Instead of Replace",
+          "description": "Fix or repair a broken item instead of throwing it away and buying a new one, reducing waste and saving resources.",
+          "carbonFootprintReduction": 2.5,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "item"
+          },
+          "xp": 40,
+          "ecoCoins": 30
+        },
+        {
+          "id": "recycling_10",
+          "shortName": "Use Cloth Napkins",
+          "description": "Use cloth napkins or towels instead of paper napkins or paper towels to reduce paper waste.",
+          "carbonFootprintReduction": 0.5,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "day"
+          },
+          "xp": 30,
+          "ecoCoins": 20
         }
       ]
     },
@@ -291,6 +323,55 @@
           },
           "xp": 25,
           "ecoCoins": 15
+        },
+        {
+          "id": "energy_10",
+          "shortName": "Use Power Strip with Switch",
+          "description": "Use a power strip with an on/off switch to easily turn off multiple devices at once and prevent phantom energy drain.",
+          "carbonFootprintReduction": 1.0,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "day"
+          },
+          "xp": 30,
+          "ecoCoins": 20
+        },
+        {
+          "id": "energy_11",
+          "shortName": "Use Laptop Instead of Desktop",
+          "description": "Use a laptop instead of a desktop computer when possible, as laptops consume significantly less energy.",
+          "carbonFootprintReduction": 1.5,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "day"
+          },
+          "xp": 35,
+          "ecoCoins": 25
+        },
+        {
+          "id": "energy_12",
+          "shortName": "Set Computer to Sleep Mode",
+          "description": "Configure your computer to automatically enter sleep or hibernate mode after a period of inactivity to save energy.",
+          "carbonFootprintReduction": 0.8,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "day"
+          },
+          "xp": 30,
+          "ecoCoins": 20,
+          "requiresPhoto": false
         }
       ]
     },
@@ -365,6 +446,55 @@
           },
           "xp": 35,
           "ecoCoins": 25
+        },
+        {
+          "id": "transportation_5",
+          "shortName": "Use Public Transport",
+          "description": "Take public transportation (bus, train, subway) instead of driving for at least one trip to reduce carbon emissions.",
+          "carbonFootprintReduction": 2.5,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "trip"
+          },
+          "xp": 40,
+          "ecoCoins": 30
+        },
+        {
+          "id": "transportation_6",
+          "shortName": "Carpool or Share Ride",
+          "description": "Share a ride with others or use a carpool service instead of driving alone to reduce per-person emissions.",
+          "carbonFootprintReduction": 1.8,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "trip"
+          },
+          "xp": 35,
+          "ecoCoins": 25
+        },
+        {
+          "id": "transportation_7",
+          "shortName": "Work from Home",
+          "description": "Work from home or remotely for at least part of the day to avoid commuting and reduce transportation emissions.",
+          "carbonFootprintReduction": 3.0,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "day"
+          },
+          "xp": 45,
+          "ecoCoins": 35,
+          "requiresPhoto": false
         }
       ]
     },
@@ -425,6 +555,54 @@
           },
           "xp": 40,
           "ecoCoins": 30
+        },
+        {
+          "id": "water_4",
+          "shortName": "Use Dishwasher Efficiently",
+          "description": "Run your dishwasher only when it's fully loaded and use the eco-mode setting to save water and energy.",
+          "carbonFootprintReduction": 1.0,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "load"
+          },
+          "xp": 30,
+          "ecoCoins": 20
+        },
+        {
+          "id": "water_5",
+          "shortName": "Collect Rainwater",
+          "description": "Set up a container to collect rainwater for watering plants or other non-drinking uses to conserve tap water.",
+          "carbonFootprintReduction": 1.5,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "day"
+          },
+          "xp": 35,
+          "ecoCoins": 25
+        },
+        {
+          "id": "water_6",
+          "shortName": "Use Water-Saving Showerhead",
+          "description": "Install or use a low-flow showerhead to reduce water consumption while showering without sacrificing comfort.",
+          "carbonFootprintReduction": 1.2,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "day"
+          },
+          "xp": 35,
+          "ecoCoins": 25
         }
       ]
     },
@@ -499,6 +677,38 @@
           },
           "xp": 30,
           "ecoCoins": 20
+        },
+        {
+          "id": "cleanup_5",
+          "shortName": "Clean Up Local Park or Area",
+          "description": "Spend time cleaning up a local park, beach, or neighborhood area by picking up litter and properly disposing of it.",
+          "carbonFootprintReduction": 3.5,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "count",
+            "current": 0,
+            "max": 5,
+            "increment": 1,
+            "unit": "trash items"
+          },
+          "xp": 50,
+          "ecoCoins": 40
+        },
+        {
+          "id": "cleanup_6",
+          "shortName": "Recycle Old Electronics",
+          "description": "Properly recycle or donate old electronics, batteries, or devices instead of throwing them in the trash.",
+          "carbonFootprintReduction": 2.0,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "session"
+          },
+          "xp": 40,
+          "ecoCoins": 30
         }
       ]
     },
@@ -547,6 +757,54 @@
           "shortName": "Use Natural Cleaning Products",
           "description": "Use natural, eco-friendly cleaning products (vinegar, baking soda, lemon) instead of harsh chemicals to reduce environmental impact.",
           "carbonFootprintReduction": 0.5,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "day"
+          },
+          "xp": 30,
+          "ecoCoins": 20
+        },
+        {
+          "id": "gardening_4",
+          "shortName": "Start Indoor Plant",
+          "description": "Start growing an indoor plant or herb garden to improve air quality and connect with nature.",
+          "carbonFootprintReduction": 1.0,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "plant"
+          },
+          "xp": 35,
+          "ecoCoins": 25
+        },
+        {
+          "id": "gardening_5",
+          "shortName": "Use Reusable Shopping Bags",
+          "description": "Bring reusable shopping bags to the store instead of accepting plastic or paper bags for your purchases.",
+          "carbonFootprintReduction": 0.4,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "shopping"
+          },
+          "xp": 30,
+          "ecoCoins": 20
+        },
+        {
+          "id": "gardening_6",
+          "shortName": "Make Your Own Cleaning Solution",
+          "description": "Create your own eco-friendly cleaning solution using natural ingredients like vinegar, baking soda, or lemon instead of buying chemical cleaners.",
+          "carbonFootprintReduction": 0.6,
           "carbonFootprintUnit": "kg CO2",
           "progressLogic": {
             "type": "boolean",
@@ -664,15 +922,79 @@
           },
           "xp": 30,
           "ecoCoins": 20
+        },
+        {
+          "id": "sustainable_7",
+          "shortName": "Buy Second-Hand Items",
+          "description": "Purchase at least one item second-hand or from a thrift store instead of buying new, reducing manufacturing waste.",
+          "carbonFootprintReduction": 2.5,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "item"
+          },
+          "xp": 40,
+          "ecoCoins": 30
+        },
+        {
+          "id": "sustainable_8",
+          "shortName": "Use Cloth Towels Instead of Paper",
+          "description": "Use cloth towels or rags instead of paper towels for cleaning and drying to reduce paper waste.",
+          "carbonFootprintReduction": 0.5,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "day"
+          },
+          "xp": 30,
+          "ecoCoins": 20
+        },
+        {
+          "id": "sustainable_9",
+          "shortName": "Meal Prep to Reduce Food Waste",
+          "description": "Plan and prepare meals in advance to reduce food waste and avoid last-minute takeout with excessive packaging.",
+          "carbonFootprintReduction": 1.5,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "day"
+          },
+          "xp": 35,
+          "ecoCoins": 25
+        },
+        {
+          "id": "sustainable_10",
+          "shortName": "Use Reusable Water Filter",
+          "description": "Use a reusable water filter or filter pitcher instead of buying bottled water to reduce plastic waste.",
+          "carbonFootprintReduction": 1.0,
+          "carbonFootprintUnit": "kg CO2",
+          "progressLogic": {
+            "type": "boolean",
+            "current": 0,
+            "max": 1,
+            "increment": 1,
+            "unit": "day"
+          },
+          "xp": 30,
+          "ecoCoins": 20
         }
       ]
     }
   ],
   "metadata": {
-    "version": "2.4.0",
+    "version": "2.5.0",
     "lastUpdated": "2024-12-19",
     "totalCategories": 7,
-    "totalQuests": 35,
+    "totalQuests": 55,
     "progressTypes": {
       "boolean": "One-time quest - becomes 1 when completed",
       "count": "Numerical quest - requires a specific number of actions",

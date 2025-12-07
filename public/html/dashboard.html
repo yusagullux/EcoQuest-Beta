@@ -2750,7 +2750,10 @@
                 // replay mode'is või kui quest on päevastes questides, ei keela checkbox'i
                 const isInDailyQuests = currentDailyQuestIds.includes(quest.id);
                 // kui quest on päevastes questides, siis ei keela seda (lubab uuesti täita)
-                const isCompleted = allQuestsCompleted ? false : (isCompletedToday || (wasEverCompleted && !isInDailyQuests));
+                // Replay mode'da: ega quest on täna juba tehtud, siis keela uuesti täitmine
+                const isCompleted = allQuestsCompleted 
+                    ? isCompletedToday  // Replay mode'da: kui täna juba tehtud, siis disabled
+                    : (isCompletedToday || (wasEverCompleted && !isInDailyQuests));
                 
                 const completionCount = questCompletionCount[quest.id] || 0;
                 const bonusMultiplier = getQuestBonusMultiplier(completionCount);
@@ -2926,6 +2929,28 @@
                     currentProfileData = profile;
                     if (!profile || typeof profile !== 'object') {
                         throw new Error("Invalid profile data");
+                    }
+                    
+                    // Replay mode'da: Kontrollib, et valitud questid pole juba täna tehtud
+                    const allQuestsCompleted = profile.allQuestsCompleted || false;
+                    const dailyCompletedQuests = profile.dailyQuestsCompleted || [];
+                    
+                    if (allQuestsCompleted) {
+                        const selectedQuestIds = Array.from(checkboxes).map(cb => {
+                            const missionItem = cb.closest('.mission-item');
+                            return missionItem?.dataset?.questId;
+                        }).filter(Boolean);
+                        
+                        const alreadyCompletedToday = selectedQuestIds.filter(questId => 
+                            dailyCompletedQuests.includes(questId)
+                        );
+                        
+                        if (alreadyCompletedToday.length > 0) {
+                            completeButton.disabled = false;
+                            completeButton.textContent = "Complete Selected Missions";
+                            alert(`⚠️ These quests are already completed today:\n\n${alreadyCompletedToday.join(', ')}\n\nPlease wait for the next daily reset to complete them again.`);
+                            return;
+                        }
                     }
                     
                     // Check only daily limit (5 missions per day) - no other verification needed

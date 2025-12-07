@@ -37,6 +37,16 @@ function calculateLevel(xp) {
     return DEFAULT_LEVEL;
 }
 
+function getAnimalEmojiForProfile(name) {
+    const emojiMap = {
+        "Cat": "🐱", "Dog": "🐶", "Rabbit": "🐰", "Bee": "🐝",
+        "Deer": "🦌", "Owl": "🦉", "Panda": "🐼", "Cobra": "🐍",
+        "Wolf": "🐺", "Bear": "🐻", "Eagle": "🦅", "Lynx": "🐱",
+        "Tiger": "🐯", "Lion": "🦁", "Phoenix": "🔥", "Dragon": "🐉"
+    };
+    return emojiMap[name] || "🐾";
+}
+
 
 async function calculateRanking(userId) {
     try {
@@ -283,6 +293,107 @@ async function calculateTotalCarbonReduction(completedQuestIds) {
     }
 }
 
+function calculateQuestProgress(questsData, completedQuestIds) {
+    if (!questsData || !questsData.categories) {
+        return null;
+    }
+
+    const mappedCompletedIds = mapCompletedQuestIds(completedQuestIds || []);
+
+    const categoryStats = questsData.categories.map(category => {
+        const totalQuests = category.quests.length;
+        const completedQuests = category.quests.filter(quest => 
+            mappedCompletedIds.includes(quest.id)
+        ).length;
+        
+        const totalCarbonReduction = category.quests.reduce((sum, quest) => {
+            if (mappedCompletedIds.includes(quest.id)) {
+                return sum + quest.carbonFootprintReduction;
+            }
+            return sum;
+        }, 0);
+
+        const maxCarbonReduction = category.quests.reduce((sum, quest) => 
+            sum + quest.carbonFootprintReduction, 0
+        );
+
+        return {
+            id: category.id,
+            name: category.name,  
+            icon: category.icon,
+            color: category.color,
+            badgeName: category.badgeName,
+            totalQuests,
+            completedQuests,
+            completionPercentage: totalQuests > 0 ? (completedQuests / totalQuests) * 100 : 0,
+            totalCarbonReduction,
+            maxCarbonReduction,
+            carbonPercentage: maxCarbonReduction > 0 ? (totalCarbonReduction / maxCarbonReduction) * 100 : 0
+        };
+    });
+
+    return categoryStats;
+}
+
+async function renderQuestCategoryProgress(completedQuestIds) {
+    try {
+        const progressList = document.getElementById("questCategoryProgressList");
+        if (!progressList) return;
+
+        const questsData = await loadQuestsData();
+        if (!questsData) {
+            progressList.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">Unable to load quest data.</p>';
+            return;
+        }
+
+        const categoryStats = calculateQuestProgress(questsData, completedQuestIds || []);
+        if (!categoryStats || categoryStats.length === 0) {
+            progressList.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">No quest categories found.</p>';
+            return;
+        }
+
+        progressList.innerHTML = "";
+
+        categoryStats.forEach(category => {
+            const categoryCard = document.createElement("div");
+            categoryCard.className = "category-progress-card";
+            categoryCard.style.borderLeft = `4px solid ${category.color}`;
+
+            const isCompleted = category.completedQuests === category.totalQuests && category.totalQuests > 0;
+
+            categoryCard.innerHTML = `
+                <div class="category-progress-header">
+                    <div class="category-info">
+                        <span class="category-icon">${category.icon}</span>
+                        <div>
+                            <h4>${category.name}</h4>
+                            <p class="category-stats">${category.completedQuests} / ${category.totalQuests} quests completed</p>
+                        </div>
+                    </div>
+                    ${isCompleted ? `<span class="category-badge">🏆 ${category.badgeName}</span>` : ''}
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" style="background: ${category.color}20;">
+                        <div class="progress-fill" style="width: ${category.completionPercentage}%; background: ${category.color};"></div>
+                    </div>
+                    <span class="progress-text">${category.completionPercentage.toFixed(0)}%</span>
+                </div>
+                <div class="carbon-info">
+                    <span>Carbon Reduced: <strong>${category.totalCarbonReduction.toFixed(1)} / ${category.maxCarbonReduction.toFixed(1)} kg CO₂</strong></span>
+                </div>
+            `;
+
+            progressList.appendChild(categoryCard);
+        });
+    } catch (error) {
+        console.error("Error rendering quest category progress:", error);
+        const progressList = document.getElementById("questCategoryProgressList");
+        if (progressList) {
+            progressList.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">Error loading quest progress.</p>';
+        }
+    }
+}
+
 
 async function loadProfileData() {
     try {
@@ -304,6 +415,7 @@ async function loadProfileData() {
         const allQuestsCompletedCount = profile.allQuestsCompletedCount || 0;
         const allQuestsCompleted = profile.allQuestsCompleted || false;
         userCollection = profile.plants || [];
+        const activePet = profile.activePet || null;
 
         const profileName = document.getElementById("profileName");
         const profileEmail = document.getElementById("profileEmail");
@@ -324,6 +436,27 @@ async function loadProfileData() {
             profileBadge.src = getBadgeImageForLevel(level);
             profileBadge.alt = `Level ${level} Badge`;
         }
+        
+        // Display active pet
+        const activePetDisplay = document.getElementById("activePetDisplay");
+        const activePetImage = document.getElementById("activePetImage");
+        if (activePetDisplay && activePetImage) {
+            if (activePet && activePet.image) {
+                activePetImage.src = activePet.image;
+                activePetImage.alt = activePet.name || "Active Pet";
+                activePetImage.onerror = function() {
+                    // Use emoji placeholder if image fails
+                    this.style.display = "none";
+                    activePetDisplay.innerHTML = `
+                        <div class="placeholder-active-pet">${getAnimalEmojiForProfile(activePet.name)}</div>
+                        <span class="active-pet-label">${activePet.name || "Active Pet"}</span>
+                    `;
+                };
+                activePetDisplay.style.display = "flex";
+            } else {
+                activePetDisplay.style.display = "none";
+            }
+        }
         if (profileLevel) profileLevel.textContent = level;
         if (missionsCompletedEl) missionsCompletedEl.textContent = missionsCompleted;
         if (totalPlantsEl) totalPlantsEl.textContent = userCollection.length;
@@ -333,6 +466,9 @@ async function loadProfileData() {
         if (totalCarbonReducedEl) {
             totalCarbonReducedEl.textContent = totalCarbon.toFixed(1);
         }
+        
+        // Render quest category progress
+        await renderQuestCategoryProgress(completedQuests);
         
         if (replayModeCard && replayModeCount) {
             if (allQuestsCompleted && allQuestsCompletedCount > 0) {
