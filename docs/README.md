@@ -7,7 +7,6 @@
 
 *Making saving the planet fun and interactive through gamification*
 
-[Features](#-features) • [Tech Stack](#-tech-stack) • [Getting Started](#-getting-started) • [Project Structure](#-project-structure) • [Contributing](#-contributing)
 
 </div>
 
